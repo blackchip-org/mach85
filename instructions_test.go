@@ -273,6 +273,58 @@ func TestAslAbsoluteX(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// bit
+// ----------------------------------------------------------------------------
+var bitTests = []struct {
+	name          string
+	a             uint8
+	fetch         uint8
+	expectedFlags uint8
+}{
+	{"zero", 0x00, 0x00, flagZ | flagB | flag5},
+	{"non-zero", 0x01, 0x01, flagB | flag5},
+	{"and-zero", 0x01, 0x02, flagZ | flagB | flag5},
+	{"bit6", 0x00, 1 << 6, flagV | flagZ | flagB | flag5},
+	{"bit7", 0x00, 1 << 7, flagN | flagZ | flagB | flag5},
+}
+
+func TestBitAbsolute(t *testing.T) {
+	for _, test := range bitTests {
+		t.Run(test.name, func(t *testing.T) {
+			c := newTestCPU()
+			c.mem.Store(0x02ab, test.fetch) // .byte fetch
+			c.mem.Store(0x0200, 0x2c)       // bit $02ab
+			c.mem.Store16(0x0201, 0x02ab)
+			c.A = test.a
+			c.Run()
+			want := test.expectedFlags
+			have := c.SR()
+			if want != have {
+				flagError(t, want, have)
+			}
+		})
+	}
+}
+
+func TestBitZeroPage(t *testing.T) {
+	for _, test := range bitTests {
+		t.Run(test.name, func(t *testing.T) {
+			c := newTestCPU()
+			c.mem.Store(0xab, test.fetch) // .byte fetch
+			c.mem.Store(0x0200, 0x2c)     // bit $ab
+			c.mem.Store(0x0201, 0xab)
+			c.A = test.a
+			c.Run()
+			want := test.expectedFlags
+			have := c.SR()
+			if want != have {
+				flagError(t, want, have)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
 func TestLdaImmediate(t *testing.T) {

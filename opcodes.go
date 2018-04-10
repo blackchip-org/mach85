@@ -8,9 +8,12 @@ var opcodes = map[uint8]func(c *CPU){
 
 	0x16: func(c *CPU) { asl(c, c.loadZeroPageX) },
 	0x1e: func(c *CPU) { asl(c, c.loadAbsoluteX) },
+
 	0x21: func(c *CPU) { and(c, c.loadIndirectX) },
+	0x24: func(c *CPU) { bit(c, c.loadZeroPage) },
 	0x25: func(c *CPU) { and(c, c.loadZeroPage) },
 	0x29: func(c *CPU) { and(c, c.loadImmediate) },
+	0x2c: func(c *CPU) { bit(c, c.loadAbsolute) },
 	0x2d: func(c *CPU) { and(c, c.loadAbsolute) },
 
 	0x31: func(c *CPU) { and(c, c.loadIndirectY) },

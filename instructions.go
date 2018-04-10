@@ -14,6 +14,13 @@ func asl(c *CPU, load loader) {
 	store(value)
 }
 
+func bit(c *CPU, load loader) {
+	value, _ := load()
+	c.Z = (c.A & value) == 0
+	c.N = (value & (1 << 7)) != 0
+	c.V = (value & (1 << 6)) != 0
+}
+
 func brk(c *CPU) {
 	c.B = true
 	c.fetch()
