@@ -373,6 +373,20 @@ func TestBranches(t *testing.T) {
 	}
 }
 
+func TestBranchBackwards(t *testing.T) {
+	c := newTestCPU()
+	c.PC = 0x05
+	c.mem.Store(0x06, 0xf0) // beq $02
+	c.mem.Store(0x07, 0xfb) // -5
+	c.Z = true
+	c.Next()
+	want := uint16(0x02)
+	have := c.PC
+	if want != have {
+		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
+	}
+}
+
 // ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
