@@ -29,14 +29,13 @@ func NewCPU(mem *Memory) *CPU {
 	}
 }
 
-func boolBit(v bool) uint8 {
-	if v {
-		return 1
-	}
-	return 0
-}
-
 func (c *CPU) SR() uint8 {
+	boolBit := func(v bool) uint8 {
+		if v {
+			return 1
+		}
+		return 0
+	}
 	return boolBit(c.C) |
 		boolBit(c.Z)<<1 |
 		boolBit(c.I)<<2 |
@@ -47,14 +46,23 @@ func (c *CPU) SR() uint8 {
 		boolBit(c.N)<<7
 }
 
-func boolChar(v bool) string {
-	if v {
-		return "*"
-	}
-	return "."
+func (c *CPU) SetSR(v uint8) {
+	c.C = v&(1<<0) != 0
+	c.Z = v&(1<<1) != 0
+	c.I = v&(1<<2) != 0
+	c.D = v&(1<<3) != 0
+	c.B = v&(1<<4) != 0
+	c.V = v&(1<<6) != 0
+	c.N = v&(1<<7) != 0
 }
 
 func (c *CPU) String() string {
+	boolChar := func(v bool) string {
+		if v {
+			return "*"
+		}
+		return "."
+	}
 	return fmt.Sprintf(""+
 		" pc  sr ac xr yr sp  n v - b d i z c\n"+
 		"%04x %02x %02x %02x %02x %02x  %s %s %s %s %s %s %s %s",

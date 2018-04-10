@@ -21,6 +21,17 @@ func bit(c *CPU, load loader) {
 	c.V = (value & (1 << 6)) != 0
 }
 
+func branch(c *CPU, do bool) {
+	displacement := int8(c.fetch())
+	if do {
+		if displacement >= 0 {
+			c.PC += uint16(displacement)
+		} else {
+			c.PC -= uint16(displacement * -1)
+		}
+	}
+}
+
 func brk(c *CPU) {
 	c.B = true
 	c.fetch()
