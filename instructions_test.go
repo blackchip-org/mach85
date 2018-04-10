@@ -180,6 +180,99 @@ func TestAndIndirectY(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// asl
+// ----------------------------------------------------------------------------
+func TestAslAccumulator(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0x0a) // asl a
+	c.A = 4
+	c.Run()
+	want := uint8(8)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAslSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0x0a) // asl a
+	c.A = 1 << 6
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAslCarry(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0x0a) // asl a
+	c.A = 1 << 7
+	c.Run()
+	want := flagC | flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAslZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x00ab, 4)    // .byte 4
+	c.mem.Store(0x0200, 0x06) // asl $ab
+	c.mem.Store(0x0201, 0xab)
+	c.Run()
+	want := uint8(8)
+	have := c.mem.Load(0x00ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAslZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x00ab, 4)    // .byte 4
+	c.mem.Store(0x0200, 0x16) // asl $a0
+	c.mem.Store(0x0201, 0xa0)
+	c.X = 0x0b
+	c.Run()
+	want := uint8(8)
+	have := c.mem.Load(0x00ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAslAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 4)    // .byte 4
+	c.mem.Store(0x0200, 0x0e) // asl $02ab
+	c.mem.Store16(0x0201, 0x02ab)
+	c.Run()
+	want := uint8(8)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAslAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 4)    // .byte 4
+	c.mem.Store(0x0200, 0x1e) // asl $02a0,X
+	c.mem.Store16(0x0201, 0x02a0)
+	c.X = 0x0b
+	c.Run()
+	want := uint8(8)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
 func TestLdaImmediate(t *testing.T) {

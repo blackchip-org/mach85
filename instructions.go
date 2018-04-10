@@ -6,6 +6,14 @@ func and(c *CPU, load loader) {
 	c.setFlagsNZ(c.A)
 }
 
+func asl(c *CPU, load loader) {
+	value, store := load()
+	c.C = (value & 0x80) != 0
+	value = (value << 1)
+	c.setFlagsNZ(value)
+	store(value)
+}
+
 func brk(c *CPU) {
 	c.B = true
 	c.fetch()

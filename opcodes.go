@@ -2,7 +2,12 @@ package mach85
 
 var opcodes = map[uint8]func(c *CPU){
 	0x00: func(c *CPU) { brk(c) },
+	0x06: func(c *CPU) { asl(c, c.loadZeroPage) },
+	0x0a: func(c *CPU) { asl(c, c.loadAccumulator) },
+	0x0e: func(c *CPU) { asl(c, c.loadAbsolute) },
 
+	0x16: func(c *CPU) { asl(c, c.loadZeroPageX) },
+	0x1e: func(c *CPU) { asl(c, c.loadAbsoluteX) },
 	0x21: func(c *CPU) { and(c, c.loadIndirectX) },
 	0x25: func(c *CPU) { and(c, c.loadZeroPage) },
 	0x29: func(c *CPU) { and(c, c.loadImmediate) },

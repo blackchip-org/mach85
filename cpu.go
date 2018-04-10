@@ -92,63 +92,66 @@ func (c *CPU) setFlagsNZ(value uint8) {
 	c.N = value&(1<<7) != 0
 }
 
-type loader func() (uint8, uint16)
+type loader func() (uint8, storer)
+type storer func(uint8)
 
-func (c *CPU) loadAbsolute() (uint8, uint16) {
+func (c *CPU) loadAbsolute() (uint8, storer) {
 	address := c.fetch16()
 	value := c.mem.Load(address)
-	return value, address
+	return value, func(v uint8) { c.mem.Store(address, v) }
 }
 
-func (c *CPU) loadAbsoluteX() (uint8, uint16) {
+func (c *CPU) loadAbsoluteX() (uint8, storer) {
 	address := c.fetch16() + uint16(c.X)
 	value := c.mem.Load(address)
-	return value, address
+	return value, func(v uint8) { c.mem.Store(address, v) }
 }
 
-func (c *CPU) loadAbsoluteY() (uint8, uint16) {
+func (c *CPU) loadAbsoluteY() (uint8, storer) {
 	address := c.fetch16() + uint16(c.Y)
 	value := c.mem.Load(address)
-	return value, address
+	return value, func(v uint8) { c.mem.Store(address, v) }
 }
 
-func (c *CPU) loadImmediate() (uint8, uint16) {
-	address := uint16(0)
+func (c *CPU) loadAccumulator() (uint8, storer) {
+	value := c.A
+	return value, func(v uint8) { c.A = v }
+}
+
+func (c *CPU) loadImmediate() (uint8, storer) {
 	value := c.fetch()
-	return value, address
+	return value, nil
 }
 
-func (c *CPU) loadIndirectX() (uint8, uint16) {
+func (c *CPU) loadIndirectX() (uint8, storer) {
 	address := c.mem.Load16(uint16(c.fetch()) + uint16(c.X))
 	value := c.mem.Load(address)
-	return value, address
+	return value, func(v uint8) { c.mem.Store(address, v) }
 }
 
-func (c *CPU) loadIndirectY() (uint8, uint16) {
+func (c *CPU) loadIndirectY() (uint8, storer) {
 	address := c.mem.Load16(uint16(c.fetch())) + uint16(c.Y)
 	value := c.mem.Load(address)
-	return value, address
+	return value, func(v uint8) { c.mem.Store(address, v) }
 }
 
-func (c *CPU) loadZeroPage() (uint8, uint16) {
+func (c *CPU) loadZeroPage() (uint8, storer) {
 	address := uint16(c.fetch())
 	value := c.mem.Load(address)
-	return value, address
+	return value, func(v uint8) { c.mem.Store(address, v) }
 }
 
-func (c *CPU) loadZeroPageX() (uint8, uint16) {
+func (c *CPU) loadZeroPageX() (uint8, storer) {
 	address := uint16(c.fetch() + c.X)
 	value := c.mem.Load(address)
-	return value, address
+	return value, func(v uint8) { c.mem.Store(address, v) }
 }
 
-func (c *CPU) loadZeroPageY() (uint8, uint16) {
+func (c *CPU) loadZeroPageY() (uint8, storer) {
 	address := uint16(c.fetch() + c.Y)
 	value := c.mem.Load(address)
-	return value, address
+	return value, func(v uint8) { c.mem.Store(address, v) }
 }
-
-type storer func(uint8)
 
 func (c *CPU) storeAbsolute(value uint8) {
 	address := c.fetch16()
