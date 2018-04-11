@@ -333,22 +333,22 @@ var branchTests = []struct {
 	flags     uint8
 	expectedA uint8
 }{
-	{"bpl yea", 0x10, flagV | flagZ | flagC, 0x02},
-	{"bpl nay", 0x10, flagN | flagV | flagZ | flagC, 0x01},
-	{"bmi yea", 0x30, flagN | flagV | flagZ | flagC, 0x02},
-	{"bmi nay", 0x30, flagV | flagZ | flagC, 0x01},
-	{"bvc yea", 0x50, flagN | flagZ | flagC, 0x02},
-	{"bvc nay", 0x50, flagN | flagV | flagZ | flagC, 0x01},
-	{"bvs yea", 0x70, flagN | flagV | flagZ | flagC, 0x02},
-	{"bvs nay", 0x70, flagN | flagZ | flagC, 0x01},
-	{"bcc yea", 0x90, flagN | flagV | flagZ, 0x02},
-	{"bcc nay", 0x90, flagN | flagV | flagZ | flagC, 0x01},
-	{"bcs yea", 0xb0, flagN | flagV | flagZ | flagC, 0x02},
-	{"bcs nay", 0xb0, flagN | flagV | flagZ, 0x01},
-	{"bne yea", 0xd0, flagN | flagV | flagC, 0x02},
-	{"bne nay", 0xd0, flagN | flagV | flagZ | flagC, 0x01},
-	{"beq yea", 0xf0, flagN | flagV | flagZ | flagC, 0x02},
-	{"beq nay", 0xf0, flagN | flagV | flagC, 0x01},
+	{"bpl yea", 0x10, 0, 0x02},
+	{"bpl nay", 0x10, flagN, 0x01},
+	{"bmi yea", 0x30, flagN, 0x02},
+	{"bmi nay", 0x30, 0, 0x01},
+	{"bvc yea", 0x50, 0, 0x02},
+	{"bvc nay", 0x50, flagV, 0x01},
+	{"bvs yea", 0x70, flagV, 0x02},
+	{"bvs nay", 0x70, 0, 0x01},
+	{"bcc yea", 0x90, 0, 0x02},
+	{"bcc nay", 0x90, flagC, 0x01},
+	{"bcs yea", 0xb0, flagC, 0x02},
+	{"bcs nay", 0xb0, 0, 0x01},
+	{"bne yea", 0xd0, 0, 0x02},
+	{"bne nay", 0xd0, flagZ, 0x01},
+	{"beq yea", 0xf0, flagZ, 0x02},
+	{"beq nay", 0xf0, 0, 0x01},
 }
 
 func TestBranches(t *testing.T) {
