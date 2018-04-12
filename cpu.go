@@ -2,6 +2,7 @@ package mach85
 
 import (
 	"fmt"
+	"log"
 )
 
 // CPU is the MOS Technology 6502 processor.
@@ -20,7 +21,8 @@ type CPU struct {
 	V bool // Overflow flag
 	N bool // Signed flag
 
-	mem *Memory
+	Trace bool
+	mem   *Memory
 }
 
 func NewCPU(mem *Memory) *CPU {
@@ -83,6 +85,9 @@ func (c *CPU) fetch16() uint16 {
 
 func (c *CPU) Next() {
 	opcode := c.fetch()
+	if c.Trace {
+		log.Printf("exec %04x: %02x\n", c.PC, opcode)
+	}
 	exec, ok := opcodes[opcode]
 	if ok {
 		exec(c)

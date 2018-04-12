@@ -333,35 +333,32 @@ var branchTests = []struct {
 	flags     uint8
 	expectedA uint8
 }{
-	{"bpl yea", 0x10, flagV | flagZ | flagC, 0x02},
-	{"bpl nay", 0x10, flagN | flagV | flagZ | flagC, 0x01},
-	{"bmi yea", 0x30, flagN | flagV | flagZ | flagC, 0x02},
-	{"bmi nay", 0x30, flagV | flagZ | flagC, 0x01},
-	{"bvc yea", 0x50, flagN | flagZ | flagC, 0x02},
-	{"bvc nay", 0x50, flagN | flagV | flagZ | flagC, 0x01},
-	{"bvs yea", 0x70, flagN | flagV | flagZ | flagC, 0x02},
-	{"bvs nay", 0x70, flagN | flagZ | flagC, 0x01},
-	{"bcc yea", 0x90, flagN | flagV | flagZ, 0x02},
-	{"bcc nay", 0x90, flagN | flagV | flagZ | flagC, 0x01},
-	{"bcs yea", 0xb0, flagN | flagV | flagZ | flagC, 0x02},
-	{"bcs nay", 0xb0, flagN | flagV | flagZ, 0x01},
-	{"bne yea", 0xd0, flagN | flagV | flagC, 0x02},
-	{"bne nay", 0xd0, flagN | flagV | flagZ | flagC, 0x01},
-	{"beq yea", 0xf0, flagN | flagV | flagZ | flagC, 0x02},
-	{"beq nay", 0xf0, flagN | flagV | flagC, 0x01},
+	{"bpl yea", 0x10, 0, 0x02},
+	{"bpl nay", 0x10, flagN, 0x01},
+	{"bmi yea", 0x30, flagN, 0x02},
+	{"bmi nay", 0x30, 0, 0x01},
+	{"bvc yea", 0x50, 0, 0x02},
+	{"bvc nay", 0x50, flagV, 0x01},
+	{"bvs yea", 0x70, flagV, 0x02},
+	{"bvs nay", 0x70, 0, 0x01},
+	{"bcc yea", 0x90, 0, 0x02},
+	{"bcc nay", 0x90, flagC, 0x01},
+	{"bcs yea", 0xb0, flagC, 0x02},
+	{"bcs nay", 0xb0, 0, 0x01},
+	{"bne yea", 0xd0, 0, 0x02},
+	{"bne nay", 0xd0, flagZ, 0x01},
+	{"beq yea", 0xf0, flagZ, 0x02},
+	{"beq nay", 0xf0, 0, 0x01},
 }
 
 func TestBranches(t *testing.T) {
 	for _, test := range branchTests {
 		t.Run(test.name, func(t *testing.T) {
 			c := newTestCPU()
-			c.mem.Store(0x0200, test.op) // branch to $0205
-			c.mem.Store(0x0201, 0x03)    //
-			c.mem.Store(0x0202, 0xa9)    // lda #01
-			c.mem.Store(0x0203, 0x01)    //
-			c.mem.Store(0x0204, 0x00)    // brk
-			c.mem.Store(0x0205, 0xa9)    // lda #02
-			c.mem.Store(0x0206, 0x02)
+			c.mem.StoreN(0x0200, test.op, 0x03) // branch to $0205
+			c.mem.StoreN(0x0202, 0xa9, 0x01)    // lda #$01
+			c.mem.StoreN(0x0204, 0x00)          // brk
+			c.mem.StoreN(0x0205, 0xa9, 0x02)    // lda #$02
 			c.SetSR(test.flags)
 			c.Run()
 			want := test.expectedA
@@ -375,13 +372,13 @@ func TestBranches(t *testing.T) {
 
 func TestBranchBackwards(t *testing.T) {
 	c := newTestCPU()
-	c.PC = 0x05
-	c.mem.Store(0x06, 0xf0) // beq $02
-	c.mem.Store(0x07, 0xfb) // -5
-	c.Z = true
-	c.Next()
-	want := uint16(0x02)
-	have := c.PC
+	c.PC = 0x0202
+	c.mem.StoreN(0x0200, 0xa9, 0x01) // lda #$01
+	c.mem.StoreN(0x0202, 0x00)       // brk
+	c.mem.StoreN(0x0203, 0xd0, 0xfb) // bne $0200
+	c.Run()
+	want := uint8(0x01)
+	have := c.A
 	if want != have {
 		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
 	}
