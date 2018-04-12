@@ -37,6 +37,14 @@ func brk(c *CPU) {
 	c.fetch()
 }
 
+func cmp(c *CPU, register uint8, load loader) {
+	value, _ := load()
+	// C set as if subtraction. Clear if 'borrow', otherwise set
+	result := int16(register) - int16(value)
+	c.C = result >= 0
+	c.setFlagsNZ(uint8(result))
+}
+
 func lda(c *CPU, load loader) {
 	value, _ := load()
 	c.A = value

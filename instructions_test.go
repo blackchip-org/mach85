@@ -369,6 +369,273 @@ func TestBranchBackwards(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// cmp
+// ----------------------------------------------------------------------------
+func TestCmpImmediateEqual(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x12
+	c.mem.StoreN(0x0200, 0xc9, 0x12) // cmp #$12
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpImmediateLessThan(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x02
+	c.mem.StoreN(0x0200, 0xc9, 0x12) // cmp #$12
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpImmediateGreaterThan(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x22
+	c.mem.StoreN(0x0200, 0xc9, 0x12) // cmp #$12
+	c.Run()
+	want := flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x12
+	c.mem.Store(0x0034, 0x12)        // .byte $12
+	c.mem.StoreN(0x0200, 0xc5, 0x34) // cmp $34
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x12
+	c.mem.Store(0x0034, 0x12)        // .byte $12
+	c.mem.StoreN(0x0200, 0xd5, 0x30) // cmp $30,X
+	c.X = 0x04
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x12
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xcd, 0xab, 0x02) // cmp $02ab
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x12
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xdd, 0xa0, 0x02) // cmp $02a0,X
+	c.X = 0x0b
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpAbsoluteY(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x12
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xd9, 0xa0, 0x02) // cmp $02a0,Y
+	c.Y = 0x0b
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpIndirectX(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x12
+	c.mem.Store16(0x4a, 0x02ab)      // .word $02ab
+	c.mem.Store(0x02ab, 0x12)        // .byte $12
+	c.mem.StoreN(0x0200, 0xc1, 0x40) // cmp ($40,X)
+	c.X = 0x0a
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCmpIndirectY(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x12
+	c.mem.Store16(0x4a, 0x02a0)      // .word $02a0
+	c.mem.Store(0x02ab, 0x12)        // .byte $12
+	c.mem.StoreN(0x0200, 0xd1, 0x4a) // cmp ($4a),Y
+	c.Y = 0x0b
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// cpx
+// ----------------------------------------------------------------------------
+func TestCpxImmediateEqual(t *testing.T) {
+	c := newTestCPU()
+	c.X = 0x12
+	c.mem.StoreN(0x0200, 0xe0, 0x12) // cpx #$12
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCpxImmediateLessThan(t *testing.T) {
+	c := newTestCPU()
+	c.X = 0x02
+	c.mem.StoreN(0x0200, 0xe0, 0x12) // cpx #$12
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCpxImmediateGreaterThan(t *testing.T) {
+	c := newTestCPU()
+	c.X = 0x22
+	c.mem.StoreN(0x0200, 0xe0, 0x12) // cpx #$12
+	c.Run()
+	want := flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCpxZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.X = 0x12
+	c.mem.Store(0x0034, 0x12)        // .byte $12
+	c.mem.StoreN(0x0200, 0xe4, 0x34) // cpx $34
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCpxAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.X = 0x12
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xec, 0xab, 0x02) // cpx $02ab
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// cpy
+// ----------------------------------------------------------------------------
+func TestCpyImmediateEqual(t *testing.T) {
+	c := newTestCPU()
+	c.Y = 0x12
+	c.mem.StoreN(0x0200, 0xc0, 0x12) // cpy #$12
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCpyImmediateLessThan(t *testing.T) {
+	c := newTestCPU()
+	c.Y = 0x02
+	c.mem.StoreN(0x0200, 0xc0, 0x12) // cpy #$12
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCpyImmediateGreaterThan(t *testing.T) {
+	c := newTestCPU()
+	c.Y = 0x22
+	c.mem.StoreN(0x0200, 0xc0, 0x12) // cpy #$12
+	c.Run()
+	want := flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCpyZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.Y = 0x12
+	c.mem.Store(0x0034, 0x12)        // .byte $12
+	c.mem.StoreN(0x0200, 0xc4, 0x34) // cpy $34
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCpyAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.Y = 0x12
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xcc, 0xab, 0x02) // cpy $02ab
+	c.Run()
+	want := flagZ | flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
 func TestLdaImmediate(t *testing.T) {
