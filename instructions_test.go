@@ -636,6 +636,113 @@ func TestCpyAbsolute(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// dec
+// ----------------------------------------------------------------------------
+func TestDecZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0xab, 0x12)          // .byte $12
+	c.mem.StoreN(0x0200, 0xc6, 0xab) // dec $ab
+	c.Run()
+	want := uint8(0x11)
+	have := c.mem.Load(0xab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestDecZeroPageZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0xab, 0x01)          // .byte $01
+	c.mem.StoreN(0x0200, 0xc6, 0xab) // dec $ab
+	c.Run()
+	want := uint8(0x00)
+	have := c.mem.Load(0xab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagZ | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestDecZeroPageSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0xab, 0x00)          // .byte $00
+	c.mem.StoreN(0x0200, 0xc6, 0xab) // dec $ab
+	c.Run()
+	want := uint8(0xff)
+	have := c.mem.Load(0xab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestDecZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0xab, 0x12)          // .byte $12
+	c.mem.StoreN(0x0200, 0xd6, 0xa0) // dec $a0,X
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x11)
+	have := c.mem.Load(0xab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestDecAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xce, 0xab, 0x02) // dec $02ab
+	c.Run()
+	want := uint8(0x11)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestDecAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xde, 0xa0, 0x02) // dec $02a0,X
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x11)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
 func TestLdaImmediate(t *testing.T) {

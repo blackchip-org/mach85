@@ -68,15 +68,19 @@ var opcodes = map[uint8]func(c *CPU){
 	0xc1: func(c *CPU) { cmp(c, c.A, c.loadIndirectX) },
 	0xc4: func(c *CPU) { cmp(c, c.Y, c.loadZeroPage) },
 	0xc5: func(c *CPU) { cmp(c, c.A, c.loadZeroPage) },
+	0xc6: func(c *CPU) { dec(c, c.loadZeroPage) },
 	0xc9: func(c *CPU) { cmp(c, c.A, c.loadImmediate) },
 	0xcc: func(c *CPU) { cmp(c, c.Y, c.loadAbsolute) },
 	0xcd: func(c *CPU) { cmp(c, c.A, c.loadAbsolute) },
+	0xce: func(c *CPU) { dec(c, c.loadAbsolute) },
 
 	0xd0: func(c *CPU) { branch(c, !c.Z) }, // bne
 	0xd1: func(c *CPU) { cmp(c, c.A, c.loadIndirectY) },
 	0xd5: func(c *CPU) { cmp(c, c.A, c.loadZeroPageX) },
+	0xd6: func(c *CPU) { dec(c, c.loadZeroPageX) },
 	0xd9: func(c *CPU) { cmp(c, c.A, c.loadAbsoluteY) },
 	0xdd: func(c *CPU) { cmp(c, c.A, c.loadAbsoluteX) },
+	0xde: func(c *CPU) { dec(c, c.loadAbsoluteX) },
 
 	0xe0: func(c *CPU) { cmp(c, c.X, c.loadImmediate) },
 	0xe4: func(c *CPU) { cmp(c, c.X, c.loadZeroPage) },

@@ -45,6 +45,13 @@ func cmp(c *CPU, register uint8, load loader) {
 	c.setFlagsNZ(uint8(result))
 }
 
+func dec(c *CPU, load loader) {
+	value, store := load()
+	value = value - 1
+	c.setFlagsNZ(value)
+	store(value)
+}
+
 func lda(c *CPU, load loader) {
 	value, _ := load()
 	c.A = value
