@@ -65,6 +65,14 @@ func inc(c *CPU, load loader) {
 	store(value)
 }
 
+func jmp(c *CPU) {
+	c.PC = c.fetch16() - 1
+}
+
+func jmpIndirect(c *CPU) {
+	c.PC = c.mem.Load16(c.fetch16()) - 1
+}
+
 func lda(c *CPU, load loader) {
 	value, _ := load()
 	c.A = value

@@ -1089,6 +1089,32 @@ func TestIncAbsoluteX(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// jmp
+// ----------------------------------------------------------------------------
+func TestJmpAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x4c, 0x30, 0x02) // jmp $0230
+	c.Next()
+	want := uint16(0x022f)
+	have := c.PC
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestJmpIndirect(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x0230, 0x0240)
+	c.mem.StoreN(0x0200, 0x6c, 0x30, 0x02) // jmp ($0230)
+	c.Next()
+	want := uint16(0x023f)
+	have := c.PC
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
 func TestLdaImmediate(t *testing.T) {
