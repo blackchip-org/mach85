@@ -743,6 +743,158 @@ func TestDecAbsoluteX(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// eor
+// ----------------------------------------------------------------------------
+func TestEorImmdediate(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x200, 0x49, 0x01) // eor #$01
+	c.A = 0x02
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestEorImmediateZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x200, 0x49, 0x01) // eor #$01
+	c.A = 0x01
+	c.Run()
+	want := uint8(0x00)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagZ | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestEorImmediateSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x200, 0x49, 0x0f) // eor #$0f
+	c.A = 0xf0
+	c.Run()
+	want := uint8(0xff)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestEorZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0034, 0x01)        // .byte $01
+	c.mem.StoreN(0x0200, 0x45, 0x34) // eor $34
+	c.A = 0x02
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestEorZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0034, 0x01)        // .byte $01
+	c.mem.StoreN(0x0200, 0x55, 0x30) // eor $30,X
+	c.A = 0x02
+	c.X = 0x04
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestEorAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x01)              // .byte $01
+	c.mem.StoreN(0x0200, 0x4d, 0xab, 0x02) // eor $02ab
+	c.A = 0x02
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestEorAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x01)              // .byte $01
+	c.mem.StoreN(0x0200, 0x5d, 0xa0, 0x02) // eor $02a0,X
+	c.A = 0x02
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestEorAbsoluteY(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x01)              // .byte $01
+	c.mem.StoreN(0x0200, 0x59, 0xa0, 0x02) // eor $02a0,Y
+	c.A = 0x02
+	c.Y = 0x0b
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestEorIndirectX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x4a, 0x02ab)      // .word $02ab
+	c.mem.Store(0x02ab, 0x01)        // .byte $01
+	c.mem.StoreN(0x0200, 0x41, 0x40) // eor ($40,X)
+	c.A = 0x02
+	c.X = 0x0a
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestEorIndirectY(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x4a, 0x02a0)      // .word $02a0
+	c.mem.Store(0x02ab, 0x01)        // .byte $01
+	c.mem.StoreN(0x0200, 0x51, 0x4a) // lda ($4a),Y
+	c.A = 0x02
+	c.Y = 0x0b
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
 func TestLdaImmediate(t *testing.T) {

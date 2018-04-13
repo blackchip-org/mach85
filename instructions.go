@@ -52,6 +52,12 @@ func dec(c *CPU, load loader) {
 	store(value)
 }
 
+func eor(c *CPU, load loader) {
+	value, _ := load()
+	c.A = c.A ^ value
+	c.setFlagsNZ(c.A)
+}
+
 func lda(c *CPU, load loader) {
 	value, _ := load()
 	c.A = value
