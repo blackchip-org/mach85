@@ -99,8 +99,12 @@ var opcodes = map[uint8]func(c *CPU){
 
 	0xe0: func(c *CPU) { cmp(c, c.X, c.loadImmediate) },
 	0xe4: func(c *CPU) { cmp(c, c.X, c.loadZeroPage) },
+	0xe6: func(c *CPU) { inc(c, c.loadZeroPage) },
 	0xec: func(c *CPU) { cmp(c, c.X, c.loadAbsolute) },
+	0xee: func(c *CPU) { inc(c, c.loadAbsolute) },
 
 	0xf0: func(c *CPU) { branch(c, c.Z) }, // beq
-	0xf8: func(c *CPU) { c.D = true },     // sed
+	0xf6: func(c *CPU) { inc(c, c.loadZeroPageX) },
+	0xf8: func(c *CPU) { c.D = true }, // sed
+	0xfe: func(c *CPU) { inc(c, c.loadAbsoluteX) },
 }

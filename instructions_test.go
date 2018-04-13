@@ -982,6 +982,113 @@ func TestSed(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// inc
+// ----------------------------------------------------------------------------
+func TestIncZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0xab, 0x12)          // .byte $12
+	c.mem.StoreN(0x0200, 0xe6, 0xab) // inc $ab
+	c.Run()
+	want := uint8(0x13)
+	have := c.mem.Load(0xab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestIncZeroPageZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0xab, 0xff)          // .byte $ff
+	c.mem.StoreN(0x0200, 0xe6, 0xab) // inc $ab
+	c.Run()
+	want := uint8(0x00)
+	have := c.mem.Load(0xab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagZ | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestIncZeroPageSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0xab, 0x7f)          // .byte $7f
+	c.mem.StoreN(0x0200, 0xe6, 0xab) // inc $ab
+	c.Run()
+	want := uint8(0x80)
+	have := c.mem.Load(0xab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestIncZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0xab, 0x12)          // .byte $12
+	c.mem.StoreN(0x0200, 0xf6, 0xa0) // inc $a0,X
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x13)
+	have := c.mem.Load(0xab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestIncAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xee, 0xab, 0x02) // inc $02ab
+	c.Run()
+	want := uint8(0x13)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestIncAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x12)              // .byte $12
+	c.mem.StoreN(0x0200, 0xfe, 0xa0, 0x02) // inc $02a0,X
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x13)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
 func TestLdaImmediate(t *testing.T) {

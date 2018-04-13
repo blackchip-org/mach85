@@ -58,6 +58,13 @@ func eor(c *CPU, load loader) {
 	c.setFlagsNZ(c.A)
 }
 
+func inc(c *CPU, load loader) {
+	value, store := load()
+	value = value + 1
+	c.setFlagsNZ(value)
+	store(value)
+}
+
 func lda(c *CPU, load loader) {
 	value, _ := load()
 	c.A = value
