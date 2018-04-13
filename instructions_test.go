@@ -895,6 +895,93 @@ func TestEorIndirectY(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// flags
+// ----------------------------------------------------------------------------
+func TestClc(t *testing.T) {
+	c := newTestCPU()
+	c.C = true
+	c.mem.StoreN(0x0200, 0x18) // clc
+	c.Run()
+	want := flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestSec(t *testing.T) {
+	c := newTestCPU()
+	c.C = false
+	c.mem.StoreN(0x0200, 0x38) // sec
+	c.Run()
+	want := flagC | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCli(t *testing.T) {
+	c := newTestCPU()
+	c.I = true
+	c.mem.StoreN(0x0200, 0x58) // cli
+	c.Run()
+	want := flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestSei(t *testing.T) {
+	c := newTestCPU()
+	c.I = false
+	c.mem.StoreN(0x0200, 0x78) // sei
+	c.Run()
+	want := flagI | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestClv(t *testing.T) {
+	c := newTestCPU()
+	c.V = true
+	c.mem.StoreN(0x0200, 0xb8) // clv
+	c.Run()
+	want := flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestCld(t *testing.T) {
+	c := newTestCPU()
+	c.D = true
+	c.mem.StoreN(0x0200, 0xd8) // cld
+	c.Run()
+	want := flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestSed(t *testing.T) {
+	c := newTestCPU()
+	c.D = false
+	c.mem.StoreN(0x0200, 0xf8) // sed
+	c.Run()
+	want := flagD | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // lda
 // ----------------------------------------------------------------------------
 func TestLdaImmediate(t *testing.T) {

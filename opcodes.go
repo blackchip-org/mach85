@@ -8,6 +8,7 @@ var opcodes = map[uint8]func(c *CPU){
 
 	0x10: func(c *CPU) { branch(c, !c.N) }, // bpl
 	0x16: func(c *CPU) { asl(c, c.loadZeroPageX) },
+	0x18: func(c *CPU) { c.C = false }, // clc
 	0x1e: func(c *CPU) { asl(c, c.loadAbsoluteX) },
 
 	0x21: func(c *CPU) { and(c, c.loadIndirectX) },
@@ -20,6 +21,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x30: func(c *CPU) { branch(c, c.N) }, // bmi
 	0x31: func(c *CPU) { and(c, c.loadIndirectY) },
 	0x35: func(c *CPU) { and(c, c.loadZeroPageX) },
+	0x38: func(c *CPU) { c.C = true }, // sec
 	0x39: func(c *CPU) { and(c, c.loadAbsoluteY) },
 	0x3d: func(c *CPU) { and(c, c.loadAbsoluteX) },
 
@@ -31,10 +33,12 @@ var opcodes = map[uint8]func(c *CPU){
 	0x50: func(c *CPU) { branch(c, !c.V) }, // bvc
 	0x51: func(c *CPU) { eor(c, c.loadIndirectY) },
 	0x55: func(c *CPU) { eor(c, c.loadZeroPageX) },
+	0x58: func(c *CPU) { c.I = false }, // cli
 	0x59: func(c *CPU) { eor(c, c.loadAbsoluteY) },
 	0x5d: func(c *CPU) { eor(c, c.loadAbsoluteX) },
 
 	0x70: func(c *CPU) { branch(c, c.V) }, // bvs
+	0x78: func(c *CPU) { c.I = true },     // sei
 
 	0x81: func(c *CPU) { sta(c, c.storeIndirectX) },
 	0x84: func(c *CPU) { sty(c, c.storeZeroPage) },
@@ -68,6 +72,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0xb4: func(c *CPU) { ldy(c, c.loadZeroPageX) },
 	0xb5: func(c *CPU) { lda(c, c.loadZeroPageX) },
 	0xb6: func(c *CPU) { ldx(c, c.loadZeroPageY) },
+	0xb8: func(c *CPU) { c.V = false }, // clv
 	0xb9: func(c *CPU) { lda(c, c.loadAbsoluteY) },
 	0xbd: func(c *CPU) { lda(c, c.loadAbsoluteX) },
 	0xbc: func(c *CPU) { ldy(c, c.loadAbsoluteX) },
@@ -87,6 +92,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0xd1: func(c *CPU) { cmp(c, c.A, c.loadIndirectY) },
 	0xd5: func(c *CPU) { cmp(c, c.A, c.loadZeroPageX) },
 	0xd6: func(c *CPU) { dec(c, c.loadZeroPageX) },
+	0xd8: func(c *CPU) { c.D = false }, // cld
 	0xd9: func(c *CPU) { cmp(c, c.A, c.loadAbsoluteY) },
 	0xdd: func(c *CPU) { cmp(c, c.A, c.loadAbsoluteX) },
 	0xde: func(c *CPU) { dec(c, c.loadAbsoluteX) },
@@ -96,4 +102,5 @@ var opcodes = map[uint8]func(c *CPU){
 	0xec: func(c *CPU) { cmp(c, c.X, c.loadAbsolute) },
 
 	0xf0: func(c *CPU) { branch(c, c.Z) }, // beq
+	0xf8: func(c *CPU) { c.D = true },     // sed
 }
