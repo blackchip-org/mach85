@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoad16(t *testing.T) {
-	m := NewMemory(0x10000)
+	m := NewMemory64k()
 	m.Store(0x00, 0xcd)
 	m.Store(0x01, 0xab)
 	want := uint16(0xabcd)
@@ -17,7 +17,7 @@ func TestLoad16(t *testing.T) {
 }
 
 func TestStore16(t *testing.T) {
-	m := NewMemory(0x10000)
+	m := NewMemory64k()
 	m.Store16(0x00, 0xabcd)
 	want := uint8(0xcd)
 	have := m.Load(0)
@@ -85,7 +85,7 @@ var dumpTests = []struct {
 }
 
 func TestDump(t *testing.T) {
-	m := NewMemory(0x0100)
+	m := NewMemory64k()
 	for _, test := range dumpTests {
 		t.Run(test.name, func(t *testing.T) {
 			for i, value := range test.data() {

@@ -73,6 +73,12 @@ func jmpIndirect(c *CPU) {
 	c.PC = c.mem.Load16(c.fetch16()) - 1
 }
 
+func jsr(c *CPU) {
+	address := c.fetch16()
+	c.push16(c.PC)
+	c.PC = address - 1
+}
+
 func lda(c *CPU, load loader) {
 	value, _ := load()
 	c.A = value

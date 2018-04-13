@@ -5,7 +5,7 @@ import (
 )
 
 func newTestCPU() *CPU {
-	mem := NewMemory(0x0300)
+	mem := NewMemory64k()
 	c := NewCPU(mem)
 	c.SP = 0xff
 	c.PC = 0x1ff
@@ -1110,7 +1110,26 @@ func TestJmpIndirect(t *testing.T) {
 	want := uint16(0x023f)
 	have := c.PC
 	if want != have {
-		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// jsr
+// ----------------------------------------------------------------------------
+func TestJsr(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x20, 0x30, 0x02) // jsr $0230
+	c.Next()
+	want := uint16(0x022f)
+	have := c.PC
+	if want != have {
+		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
+	}
+	want = 0x0202
+	have = c.mem.Load16(Stack + 0x100 - 2)
+	if want != have {
+		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
 	}
 }
 

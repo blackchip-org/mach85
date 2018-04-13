@@ -5,6 +5,10 @@ import (
 	"log"
 )
 
+const (
+	Stack = uint16(0x0100)
+)
+
 // CPU is the MOS Technology 6502 processor.
 type CPU struct {
 	PC uint16 // Program counter
@@ -81,6 +85,16 @@ func (c *CPU) fetch() uint8 {
 
 func (c *CPU) fetch16() uint16 {
 	return uint16(c.fetch()) + (uint16(c.fetch()))<<8
+}
+
+func (c *CPU) push(value uint8) {
+	c.mem.Store(Stack+uint16(c.SP), value)
+	c.SP--
+}
+
+func (c *CPU) push16(value uint16) {
+	c.push(uint8(value >> 8))
+	c.push(uint8(value & 0xff))
 }
 
 func (c *CPU) Next() {

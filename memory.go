@@ -16,6 +16,10 @@ func NewMemory(size int) *Memory {
 	return m
 }
 
+func NewMemory64k() *Memory {
+	return NewMemory(0x10000)
+}
+
 func (m *Memory) Load(address uint16) uint8 {
 	return m.bytes[address]
 }

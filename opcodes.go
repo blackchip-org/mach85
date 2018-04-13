@@ -11,6 +11,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x18: func(c *CPU) { c.C = false }, // clc
 	0x1e: func(c *CPU) { asl(c, c.loadAbsoluteX) },
 
+	0x20: func(c *CPU) { jsr(c) },
 	0x21: func(c *CPU) { and(c, c.loadIndirectX) },
 	0x24: func(c *CPU) { bit(c, c.loadZeroPage) },
 	0x25: func(c *CPU) { and(c, c.loadZeroPage) },
