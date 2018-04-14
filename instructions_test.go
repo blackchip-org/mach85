@@ -745,6 +745,84 @@ func TestDecAbsoluteX(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// dex
+// ----------------------------------------------------------------------------
+func TestDex(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xca)
+	c.X = 0x12
+	c.Run()
+	want := uint8(0x11)
+	have := c.X
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestDexZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xca)
+	c.X = 0x01
+	c.Run()
+	want := flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestDexSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xca)
+	c.X = 0x00
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// dey
+// ----------------------------------------------------------------------------
+func TestDey(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x88)
+	c.Y = 0x12
+	c.Run()
+	want := uint8(0x11)
+	have := c.Y
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestDeyZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x88)
+	c.Y = 0x01
+	c.Run()
+	want := flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestDeySigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x88)
+	c.Y = 0x00
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // eor
 // ----------------------------------------------------------------------------
 func TestEorImmdediate(t *testing.T) {
@@ -1087,6 +1165,84 @@ func TestIncAbsoluteX(t *testing.T) {
 	have = c.SR()
 	if want != have {
 		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// inx
+// ----------------------------------------------------------------------------
+func TestInx(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe8)
+	c.X = 0x12
+	c.Run()
+	want := uint8(0x13)
+	have := c.X
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestInxZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe8)
+	c.X = 0xff
+	c.Run()
+	want := flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestInxSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe8)
+	c.X = 0x7f
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// iny
+// ----------------------------------------------------------------------------
+func TestIny(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xc8)
+	c.Y = 0x12
+	c.Run()
+	want := uint8(0x13)
+	have := c.Y
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestInyZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xc8)
+	c.Y = 0xff
+	c.Run()
+	want := flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestInySigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xc8)
+	c.Y = 0x7f
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
 	}
 }
 

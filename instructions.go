@@ -52,6 +52,16 @@ func dec(c *CPU, load loader) {
 	store(value)
 }
 
+func dex(c *CPU) {
+	c.X--
+	c.setFlagsNZ(c.X)
+}
+
+func dey(c *CPU) {
+	c.Y--
+	c.setFlagsNZ(c.Y)
+}
+
 func eor(c *CPU, load loader) {
 	value, _ := load()
 	c.A = c.A ^ value
@@ -63,6 +73,16 @@ func inc(c *CPU, load loader) {
 	value = value + 1
 	c.setFlagsNZ(value)
 	store(value)
+}
+
+func inx(c *CPU) {
+	c.X++
+	c.setFlagsNZ(c.X)
+}
+
+func iny(c *CPU) {
+	c.Y++
+	c.setFlagsNZ(c.Y)
 }
 
 func jmp(c *CPU) {

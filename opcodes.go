@@ -53,6 +53,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x5e: func(c *CPU) { lsr(c, c.loadAbsoluteX) },
 
 	0x6c: func(c *CPU) { jmpIndirect(c) },
+
 	0x70: func(c *CPU) { branch(c, c.V) }, // bvs
 	0x78: func(c *CPU) { c.I = true },     // sei
 
@@ -60,6 +61,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x84: func(c *CPU) { sty(c, c.storeZeroPage) },
 	0x85: func(c *CPU) { sta(c, c.storeZeroPage) },
 	0x86: func(c *CPU) { stx(c, c.storeZeroPage) },
+	0x88: func(c *CPU) { dey(c) },
 	0x8c: func(c *CPU) { sty(c, c.storeAbsolute) },
 	0x8d: func(c *CPU) { sta(c, c.storeAbsolute) },
 	0x8e: func(c *CPU) { stx(c, c.storeAbsolute) },
@@ -99,7 +101,9 @@ var opcodes = map[uint8]func(c *CPU){
 	0xc4: func(c *CPU) { cmp(c, c.Y, c.loadZeroPage) },
 	0xc5: func(c *CPU) { cmp(c, c.A, c.loadZeroPage) },
 	0xc6: func(c *CPU) { dec(c, c.loadZeroPage) },
+	0xc8: func(c *CPU) { iny(c) },
 	0xc9: func(c *CPU) { cmp(c, c.A, c.loadImmediate) },
+	0xca: func(c *CPU) { dex(c) },
 	0xcc: func(c *CPU) { cmp(c, c.Y, c.loadAbsolute) },
 	0xcd: func(c *CPU) { cmp(c, c.A, c.loadAbsolute) },
 	0xce: func(c *CPU) { dec(c, c.loadAbsolute) },
@@ -116,6 +120,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0xe0: func(c *CPU) { cmp(c, c.X, c.loadImmediate) },
 	0xe4: func(c *CPU) { cmp(c, c.X, c.loadZeroPage) },
 	0xe6: func(c *CPU) { inc(c, c.loadZeroPage) },
+	0xe8: func(c *CPU) { inx(c) },
 	0xea: func(c *CPU) {}, // nop
 	0xec: func(c *CPU) { cmp(c, c.X, c.loadAbsolute) },
 	0xee: func(c *CPU) { inc(c, c.loadAbsolute) },
