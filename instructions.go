@@ -142,3 +142,8 @@ func stx(c *CPU, store storer) {
 func sty(c *CPU, store storer) {
 	store(c.Y)
 }
+
+func transfer(c *CPU, from uint8, to *uint8) {
+	*to = from
+	c.setFlagsNZ(*to)
+}
