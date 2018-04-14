@@ -1537,6 +1537,162 @@ func TestLsrAbsoluteX(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// nop
+// ----------------------------------------------------------------------------
+func TestNop(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0xea)
+	c.Next()
+	want := uint16(0x0200)
+	have := c.PC
+	if want != have {
+		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// ora
+// ----------------------------------------------------------------------------
+func TestOraImmediate(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x09, 0x01) // ora #$01
+	c.A = 0x02
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestOraZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x09, 0x00) // ora #$00
+	c.A = 0x00
+	c.Run()
+	want := flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestOraSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xa9, 0xf0) // and #$f0
+	c.A = 0x0f
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestOraZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0034, 0x01)        // .byte $01
+	c.mem.StoreN(0x0200, 0x05, 0x34) // ora $34
+	c.A = 0x02
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestOraZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0034, 0x01)        // .byte $01
+	c.mem.StoreN(0x0200, 0x15, 0x30) // ora $30,X
+	c.A = 0x02
+	c.X = 0x04
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestOraAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x01)              // .byte $01
+	c.mem.StoreN(0x0200, 0x0d, 0xab, 0x02) // ora $02ab
+	c.A = 0x02
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestOraAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x01)              // .byte $01
+	c.mem.StoreN(0x0200, 0x1d, 0xa0, 0x02) // ora $02a0,X
+	c.A = 0x02
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestOraAbsoluteY(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x01)              // .byte $01
+	c.mem.StoreN(0x0200, 0x19, 0xa0, 0x02) // ora $02a0,Y
+	c.A = 0x02
+	c.Y = 0x0b
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestOraIndirectX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x4a, 0x02ab)      // .word $02ab
+	c.mem.Store(0x02ab, 0x01)        // .byte $01
+	c.mem.StoreN(0x0200, 0x01, 0x40) // ora ($40,X)
+	c.A = 0x02
+	c.X = 0x0a
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAndOraIndirectY(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x4a, 0x02a0)      // .word $02a0
+	c.mem.Store(0x02ab, 0x01)        // .byte $01
+	c.mem.StoreN(0x0200, 0x11, 0x4a) // ora ($4a),Y
+	c.A = 0x02
+	c.Y = 0x0b
+	c.Run()
+	want := uint8(0x03)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // sta
 // ----------------------------------------------------------------------------
 

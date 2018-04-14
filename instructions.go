@@ -105,6 +105,12 @@ func lsr(c *CPU, load loader) {
 	store(value)
 }
 
+func ora(c *CPU, load loader) {
+	value, _ := load()
+	c.A = c.A | value
+	c.setFlagsNZ(c.A)
+}
+
 func sta(c *CPU, store storer) {
 	store(c.A)
 }

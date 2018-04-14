@@ -2,13 +2,21 @@ package mach85
 
 var opcodes = map[uint8]func(c *CPU){
 	0x00: func(c *CPU) { brk(c) },
+	0x01: func(c *CPU) { ora(c, c.loadIndirectX) },
+	0x05: func(c *CPU) { ora(c, c.loadZeroPage) },
 	0x06: func(c *CPU) { asl(c, c.loadZeroPage) },
+	0x09: func(c *CPU) { ora(c, c.loadImmediate) },
 	0x0a: func(c *CPU) { asl(c, c.loadAccumulator) },
+	0x0d: func(c *CPU) { ora(c, c.loadAbsolute) },
 	0x0e: func(c *CPU) { asl(c, c.loadAbsolute) },
 
 	0x10: func(c *CPU) { branch(c, !c.N) }, // bpl
+	0x11: func(c *CPU) { ora(c, c.loadIndirectY) },
+	0x15: func(c *CPU) { ora(c, c.loadZeroPageX) },
 	0x16: func(c *CPU) { asl(c, c.loadZeroPageX) },
 	0x18: func(c *CPU) { c.C = false }, // clc
+	0x19: func(c *CPU) { ora(c, c.loadAbsoluteY) },
+	0x1d: func(c *CPU) { ora(c, c.loadAbsoluteX) },
 	0x1e: func(c *CPU) { asl(c, c.loadAbsoluteX) },
 
 	0x20: func(c *CPU) { jsr(c) },
@@ -108,6 +116,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0xe0: func(c *CPU) { cmp(c, c.X, c.loadImmediate) },
 	0xe4: func(c *CPU) { cmp(c, c.X, c.loadZeroPage) },
 	0xe6: func(c *CPU) { inc(c, c.loadZeroPage) },
+	0xea: func(c *CPU) {}, // nop
 	0xec: func(c *CPU) { cmp(c, c.X, c.loadAbsolute) },
 	0xee: func(c *CPU) { inc(c, c.loadAbsolute) },
 
