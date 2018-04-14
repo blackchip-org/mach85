@@ -97,6 +97,14 @@ func ldy(c *CPU, load loader) {
 	c.setFlagsNZ(value)
 }
 
+func lsr(c *CPU, load loader) {
+	value, store := load()
+	c.C = (value & 0x01) != 0
+	value = value >> 1
+	c.setFlagsNZ(value)
+	store(value)
+}
+
 func sta(c *CPU, store storer) {
 	store(c.A)
 }

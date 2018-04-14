@@ -4,6 +4,8 @@ import (
 	"testing"
 )
 
+// http://www.6502.org/tutorials/6502opcodes.html
+
 func newTestCPU() *CPU {
 	mem := NewMemory64k()
 	c := NewCPU(mem)
@@ -1442,6 +1444,93 @@ func TestLdyAbsoluteX(t *testing.T) {
 	c.Run()
 	want := uint8(0x12)
 	have := c.Y
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// lsr
+// ----------------------------------------------------------------------------
+func TestLsrAccumulator(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x04
+	c.mem.StoreN(0x0200, 0x04a) // lsr a
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestLsrShiftOut(t *testing.T) {
+	c := newTestCPU()
+	c.A = 0x01
+	c.mem.StoreN(0x0200, 0x04a) // lsr a
+	c.Run()
+	want := uint8(0x00)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagZ | flagC | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestLsrZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x00ab, 4)           // .byte 4
+	c.mem.StoreN(0x0200, 0x46, 0xab) // lsr $ab
+	c.Run()
+	want := uint8(2)
+	have := c.mem.Load(0x00ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestLsrZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x00ab, 4)           // .byte 4
+	c.mem.StoreN(0x0200, 0x56, 0xa0) // lsr $a0
+	c.X = 0x0b
+	c.Run()
+	want := uint8(2)
+	have := c.mem.Load(0x00ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestLsrAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 4)                 // .byte 4
+	c.mem.StoreN(0x0200, 0x4e, 0xab, 0x02) // lsr $02ab
+	c.Run()
+	want := uint8(2)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestLsrAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 4)                 // .byte 4
+	c.mem.StoreN(0x0200, 0x5e, 0xa0, 0x02) // lsr $02a0,X
+	c.X = 0x0b
+	c.Run()
+	want := uint8(2)
+	have := c.mem.Load(0x02ab)
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
 	}

@@ -28,16 +28,21 @@ var opcodes = map[uint8]func(c *CPU){
 
 	0x41: func(c *CPU) { eor(c, c.loadIndirectX) },
 	0x45: func(c *CPU) { eor(c, c.loadZeroPage) },
+	0x46: func(c *CPU) { lsr(c, c.loadZeroPage) },
 	0x49: func(c *CPU) { eor(c, c.loadImmediate) },
+	0x4a: func(c *CPU) { lsr(c, c.loadAccumulator) },
 	0x4c: func(c *CPU) { jmp(c) },
 	0x4d: func(c *CPU) { eor(c, c.loadAbsolute) },
+	0x4e: func(c *CPU) { lsr(c, c.loadAbsolute) },
 
 	0x50: func(c *CPU) { branch(c, !c.V) }, // bvc
 	0x51: func(c *CPU) { eor(c, c.loadIndirectY) },
 	0x55: func(c *CPU) { eor(c, c.loadZeroPageX) },
+	0x56: func(c *CPU) { lsr(c, c.loadZeroPageX) },
 	0x58: func(c *CPU) { c.I = false }, // cli
 	0x59: func(c *CPU) { eor(c, c.loadAbsoluteY) },
 	0x5d: func(c *CPU) { eor(c, c.loadAbsoluteX) },
+	0x5e: func(c *CPU) { lsr(c, c.loadAbsoluteX) },
 
 	0x6c: func(c *CPU) { jmpIndirect(c) },
 	0x70: func(c *CPU) { branch(c, c.V) }, // bvs
