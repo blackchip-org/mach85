@@ -2095,7 +2095,7 @@ func TestOraIndirectX(t *testing.T) {
 	}
 }
 
-func TestAndOraIndirectY(t *testing.T) {
+func TestOraIndirectY(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store16(0x4a, 0x02a0)      // .word $02a0
 	c.mem.Store(0x02ab, 0x01)        // .byte $01
@@ -2105,6 +2105,127 @@ func TestAndOraIndirectY(t *testing.T) {
 	c.Run()
 	want := uint8(0x03)
 	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// rol
+// ----------------------------------------------------------------------------
+func TestRolAccumulator(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x2a) // rol a
+	c.A = 4
+	c.Run()
+	want := uint8(0x08)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestRolRotateOut(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x2a) // rol a
+	c.A = 1 << 7
+	c.Run()
+	want := uint8(0)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagZ | flagC | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestRolRotateIn(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x2a) // rol a
+	c.C = true
+	c.A = 0
+	c.Run()
+	want := uint8(0x01)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestRolSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x2a) // rol a
+	c.A = 1 << 6
+	c.Run()
+	want := uint8(1 << 7)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestRolZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x00ab, 0x04)        // .byte 0x04
+	c.mem.StoreN(0x0200, 0x26, 0xab) // rol $ab
+	c.Run()
+	want := uint8(0x08)
+	have := c.mem.Load(0x00ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+func TestRolZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x00ab, 0x04)        // .byte 0x04
+	c.mem.StoreN(0x0200, 0x36, 0xa0) // rol $a0
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x08)
+	have := c.mem.Load(0x00ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestRolAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x04)              // .byte 0x04
+	c.mem.StoreN(0x0200, 0x2e, 0xab, 0x02) // rol $02ab
+	c.Run()
+	want := uint8(0x08)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestRolAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x04)              // .byte 0x04
+	c.mem.StoreN(0x0200, 0x3e, 0xa0, 0x02) // rol $02a0,X
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x08)
+	have := c.mem.Load(0x02ab)
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
 	}

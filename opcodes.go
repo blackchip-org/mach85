@@ -23,16 +23,21 @@ var opcodes = map[uint8]func(c *CPU){
 	0x21: func(c *CPU) { and(c, c.loadIndirectX) },
 	0x24: func(c *CPU) { bit(c, c.loadZeroPage) },
 	0x25: func(c *CPU) { and(c, c.loadZeroPage) },
+	0x26: func(c *CPU) { rol(c, c.loadZeroPage) },
 	0x29: func(c *CPU) { and(c, c.loadImmediate) },
+	0x2a: func(c *CPU) { rol(c, c.loadAccumulator) },
 	0x2c: func(c *CPU) { bit(c, c.loadAbsolute) },
 	0x2d: func(c *CPU) { and(c, c.loadAbsolute) },
+	0x2e: func(c *CPU) { rol(c, c.loadAbsolute) },
 
 	0x30: func(c *CPU) { branch(c, c.N) }, // bmi
 	0x31: func(c *CPU) { and(c, c.loadIndirectY) },
 	0x35: func(c *CPU) { and(c, c.loadZeroPageX) },
+	0x36: func(c *CPU) { rol(c, c.loadZeroPageX) },
 	0x38: func(c *CPU) { c.C = true }, // sec
 	0x39: func(c *CPU) { and(c, c.loadAbsoluteY) },
 	0x3d: func(c *CPU) { and(c, c.loadAbsoluteX) },
+	0x3e: func(c *CPU) { rol(c, c.loadAbsoluteX) },
 
 	0x41: func(c *CPU) { eor(c, c.loadIndirectX) },
 	0x45: func(c *CPU) { eor(c, c.loadZeroPage) },
