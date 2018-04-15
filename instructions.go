@@ -1,5 +1,29 @@
 package mach85
 
+func adc(c *CPU, load loader) {
+	v1 := c.A
+	v2, _ := load()
+	if c.D {
+		v1 = fromBCD(v1)
+		v2 = fromBCD(v2)
+	}
+	utotal := uint16(v1) + uint16(v2)
+	total := int16(int8(v1)) + int16(int8(v2))
+	if c.C {
+		utotal++
+		total++
+	}
+	if c.D {
+		c.C = utotal > 99
+		c.A = toBCD(uint8(utotal))
+	} else {
+		c.C = utotal > 0xff
+		c.V = total < -128 || total > 127
+		c.A = uint8(utotal)
+	}
+	c.setFlagsNZ(c.A)
+}
+
 func and(c *CPU, load loader) {
 	value, _ := load()
 	c.A = c.A & value

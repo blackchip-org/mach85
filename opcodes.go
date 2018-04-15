@@ -52,10 +52,18 @@ var opcodes = map[uint8]func(c *CPU){
 	0x5d: func(c *CPU) { eor(c, c.loadAbsoluteX) },
 	0x5e: func(c *CPU) { lsr(c, c.loadAbsoluteX) },
 
+	0x61: func(c *CPU) { adc(c, c.loadIndirectX) },
+	0x65: func(c *CPU) { adc(c, c.loadZeroPage) },
+	0x69: func(c *CPU) { adc(c, c.loadImmediate) },
 	0x6c: func(c *CPU) { jmpIndirect(c) },
+	0x6d: func(c *CPU) { adc(c, c.loadAbsolute) },
 
 	0x70: func(c *CPU) { branch(c, c.V) }, // bvs
-	0x78: func(c *CPU) { c.I = true },     // sei
+	0x71: func(c *CPU) { adc(c, c.loadIndirectY) },
+	0x75: func(c *CPU) { adc(c, c.loadZeroPageX) },
+	0x78: func(c *CPU) { c.I = true }, // sei
+	0x79: func(c *CPU) { adc(c, c.loadAbsoluteY) },
+	0x7d: func(c *CPU) { adc(c, c.loadAbsoluteX) },
 
 	0x81: func(c *CPU) { sta(c, c.storeIndirectX) },
 	0x84: func(c *CPU) { sty(c, c.storeZeroPage) },

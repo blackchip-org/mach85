@@ -30,6 +30,268 @@ func flagError(t *testing.T, want uint8, have uint8) {
 }
 
 // ----------------------------------------------------------------------------
+// adc
+// ----------------------------------------------------------------------------
+func TestAdcImmediate(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
+	c.A = 0x08
+	c.Run()
+	want := uint8(0x0a)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAdcWithCarry(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
+	c.A = 0x08
+	c.C = true
+	c.Run()
+	want := uint8(0x0b)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAdcCarryResult(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
+	c.A = 0xff
+	c.Run()
+	want := uint8(0x01)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagC | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAdcZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
+	c.A = 0xfe
+	c.Run()
+	want := uint8(0x00)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagZ | flagC | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAdcZeroSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
+	c.A = 0xf0
+	c.Run()
+	want := uint8(0xf2)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAdcOverflowSet(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
+	c.A = 0x7f
+	c.Run()
+	want := uint8(0x81)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagV | flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAdcOverflowClear(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0xff) // lda #$ff (-1)
+	c.V = true
+	c.A = 0x81
+	c.Run()
+	want := uint8(0x80)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagC | flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAdcBcd(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda $#02
+	c.D = true
+	c.A = 0x08
+	c.Run()
+	want := uint8(0x10)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcBcdWithCarry(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda $#02
+	c.D = true
+	c.C = true
+	c.A = 0x08
+	c.Run()
+	want := uint8(0x11)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcBcdCarryResult(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
+	c.D = true
+	c.A = 0x99
+	c.Run()
+	want := uint8(0x01)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0034, 0x08)        // .byte $08
+	c.mem.StoreN(0x0200, 0x65, 0x34) // adc $34
+	c.A = 0x02
+	c.Run()
+	want := uint8(0x0a)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0034, 0x08)        // .byte $08
+	c.mem.StoreN(0x0200, 0x75, 0x30) // adc $30,X
+	c.A = 0x02
+	c.X = 0x04
+	c.Run()
+	want := uint8(0x0a)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x08)              // .byte $08
+	c.mem.StoreN(0x0200, 0x6d, 0xab, 0x02) // adc $02ab
+	c.A = 0x02
+	c.Run()
+	want := uint8(0x0a)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x08)              // .byte $08
+	c.mem.StoreN(0x0200, 0x7d, 0xa0, 0x02) // adc $02a0,X
+	c.A = 0x02
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x0a)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcAbsoluteY(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x08)              // .byte $08
+	c.mem.StoreN(0x0200, 0x79, 0xa0, 0x02) // adc $02a0,Y
+	c.A = 0x02
+	c.Y = 0x0b
+	c.Run()
+	want := uint8(0x0a)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcIndirectX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x4a, 0x02ab)      // .word $02ab
+	c.mem.Store(0x02ab, 0x08)        // .byte $08
+	c.mem.StoreN(0x0200, 0x61, 0x40) // adc ($40,X)
+	c.A = 0x02
+	c.X = 0x0a
+	c.Run()
+	want := uint8(0x0a)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestAdcIndirectY(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x4a, 0x02a0)      // .word $02a0
+	c.mem.Store(0x02ab, 0x08)        // .byte $08
+	c.mem.StoreN(0x0200, 0x71, 0x4a) // adc ($4a),Y
+	c.A = 0x02
+	c.Y = 0x0b
+	c.Run()
+	want := uint8(0x0a)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // and
 // ----------------------------------------------------------------------------
 func TestAndImmediate(t *testing.T) {
