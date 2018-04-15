@@ -58,6 +58,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x5d: func(c *CPU) { eor(c, c.loadAbsoluteX) },
 	0x5e: func(c *CPU) { lsr(c, c.loadAbsoluteX) },
 
+	0x60: func(c *CPU) { c.PC = c.pull16() }, // rts
 	0x61: func(c *CPU) { adc(c, c.loadIndirectX) },
 	0x65: func(c *CPU) { adc(c, c.loadZeroPage) },
 	0x66: func(c *CPU) { ror(c, c.loadZeroPage) },
