@@ -2232,6 +2232,110 @@ func TestRolAbsoluteX(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// ror
+// ----------------------------------------------------------------------------
+func TestRorAccumulator(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x6a) // ror a
+	c.A = 4
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+func TestRorRotateOut(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x6a) // ror a
+	c.A = 1
+	c.Run()
+	want := uint8(0)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagZ | flagC | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestRorRotateIn(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x6a) // ror a
+	c.C = true
+	c.A = 0
+	c.Run()
+	want := uint8(0x80)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestRorZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x00ab, 0x04)        // .byte 0x04
+	c.mem.StoreN(0x0200, 0x66, 0xab) // ror $ab
+	c.Run()
+	want := uint8(0x02)
+	have := c.mem.Load(0x00ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestRorZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x00ab, 0x04)        // .byte 0x04
+	c.mem.StoreN(0x0200, 0x76, 0xa0) // ror $a0
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x02)
+	have := c.mem.Load(0x00ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestRorAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x04)              // .byte 0x04
+	c.mem.StoreN(0x0200, 0x6e, 0xab, 0x02) // ror $02ab
+	c.Run()
+	want := uint8(0x02)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestRorAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x04)              // .byte 0x04
+	c.mem.StoreN(0x0200, 0x7e, 0xa0, 0x02) // ror $02a0,X
+	c.X = 0x0b
+	c.Run()
+	want := uint8(0x02)
+	have := c.mem.Load(0x02ab)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // sta
 // ----------------------------------------------------------------------------
 

@@ -167,6 +167,18 @@ func rol(c *CPU, load loader) {
 	store(value)
 }
 
+func ror(c *CPU, load loader) {
+	value, store := load()
+	rotate := uint8(0)
+	if c.C {
+		rotate = 0x80
+	}
+	c.C = value&0x01 != 0
+	value = value>>1 + rotate
+	c.setFlagsNZ(value)
+	store(value)
+}
+
 func sta(c *CPU, store storer) {
 	store(c.A)
 }
