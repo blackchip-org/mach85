@@ -2336,6 +2336,27 @@ func TestRorAbsoluteX(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// rti
+// ----------------------------------------------------------------------------
+func TestRti(t *testing.T) {
+	c := newTestCPU()
+	c.push16(0x1234)
+	c.push(0xff)
+	c.mem.Store(0x0200, 0x40) //rti
+	c.Run()
+	wantSR := uint8(0x0ff)
+	haveSR := c.SR()
+	if wantSR != haveSR {
+		t.Errorf("\n want: %02x \n have: %02x \n", wantSR, haveSR)
+	}
+	wantPC := uint16(0x1233)
+	havePC := c.PC
+	if wantPC != havePC {
+		t.Errorf("\n want: %04x \n have: %04x \n", wantPC, havePC)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // sta
 // ----------------------------------------------------------------------------
 

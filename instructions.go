@@ -179,6 +179,11 @@ func ror(c *CPU, load loader) {
 	store(value)
 }
 
+func rti(c *CPU) {
+	c.SetSR(c.pull())
+	c.PC = c.pull16() - 1
+}
+
 func sta(c *CPU, store storer) {
 	store(c.A)
 }
