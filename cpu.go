@@ -97,6 +97,15 @@ func (c *CPU) push16(value uint16) {
 	c.push(uint8(value & 0xff))
 }
 
+func (c *CPU) pull() uint8 {
+	c.SP++
+	return c.mem.Load(Stack + uint16(c.SP))
+}
+
+func (c *CPU) pull16() uint16 {
+	return uint16(c.pull()) | uint16(c.pull())<<8
+}
+
 func (c *CPU) Next() {
 	opcode := c.fetch()
 	if c.Trace {

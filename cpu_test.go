@@ -105,3 +105,26 @@ func TestPushOverflow(t *testing.T) {
 		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
 	}
 }
+
+func TestPull(t *testing.T) {
+	c := NewCPU(NewMemory64k())
+	c.mem.Store(Stack+0xff, 0x12)
+	c.SP = 0xfe
+	want := uint8(0x12)
+	have := c.pull()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
+
+func TestPull16(t *testing.T) {
+	c := NewCPU(NewMemory64k())
+	c.mem.Store(Stack+0xfe, 0x34)
+	c.mem.Store(Stack+0xff, 0x12)
+	c.SP = 0xfd
+	want := uint16(0x1234)
+	have := c.pull16()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
