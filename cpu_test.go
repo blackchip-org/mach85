@@ -1,8 +1,34 @@
 package mach85
 
 import (
+	"bytes"
+	"log"
+	"os"
+	"strings"
 	"testing"
 )
+
+func newTestCPU() *CPU {
+	mem := NewMemory64k()
+	c := NewCPU(mem)
+	c.SP = 0xff
+	c.PC = 0x1ff
+	return c
+}
+
+func TestIllegalOpcode(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() { log.SetOutput(os.Stderr) }()
+
+	c := newTestCPU()
+	// http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
+	c.mem.Store(0x0200, 0x02) // *KIL
+	c.Run()
+	if !strings.Contains(buf.String(), "illegal") {
+		t.Errorf("illegal instruction not logged")
+	}
+}
 
 var cpuStringTests = []struct {
 	setup func(c *CPU)

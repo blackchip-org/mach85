@@ -6,14 +6,6 @@ import (
 
 // http://www.6502.org/tutorials/6502opcodes.html
 
-func newTestCPU() *CPU {
-	mem := NewMemory64k()
-	c := NewCPU(mem)
-	c.SP = 0xff
-	c.PC = 0x1ff
-	return c
-}
-
 const (
 	flagC = uint8(1 << 0)
 	flagZ = uint8(1 << 1)

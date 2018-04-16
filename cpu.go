@@ -112,7 +112,9 @@ func (c *CPU) Next() {
 		log.Printf("exec %04x: %02x\n", c.PC, opcode)
 	}
 	exec, ok := opcodes[opcode]
-	if ok {
+	if !ok {
+		log.Printf("$%04x: illegal opcode: $%02x", c.PC, opcode)
+	} else {
 		exec(c)
 	}
 }
