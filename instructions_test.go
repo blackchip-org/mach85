@@ -2111,6 +2111,94 @@ func TestOraIndirectY(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// pha
+// ----------------------------------------------------------------------------
+func TestPha(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x48)
+	c.A = 0x12
+	c.Run()
+	want := uint8(0x12)
+	have := c.mem.Load(Stack + 0xff)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// pha
+// ----------------------------------------------------------------------------
+func TestPhp(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x08)
+	c.C = true
+	c.Run()
+	want := flagC | flag5
+	have := c.mem.Load(Stack + 0xff)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// pla
+// ----------------------------------------------------------------------------
+func TestPla(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x68)
+	c.SP = 0xfe
+	c.mem.Store(Stack+0xff, 0x12)
+	c.Run()
+	want := uint8(0x12)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestPlaZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x68)
+	c.SP = 0xfe
+	c.mem.Store(Stack+0xff, 0x00)
+	c.Run()
+	want := flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestPlaSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x68)
+	c.SP = 0xfe
+	c.mem.Store(Stack+0xff, 0xff)
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// plp
+// ----------------------------------------------------------------------------
+func TestPlp(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0x28)
+	c.SP = 0xfe
+	c.mem.Store(Stack+0xff, flagC|flagN)
+	c.Run()
+	want := flagC | flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // rol
 // ----------------------------------------------------------------------------
 func TestRolAccumulator(t *testing.T) {
@@ -2972,30 +3060,6 @@ func TestTxs(t *testing.T) {
 	c.Run()
 	want := uint8(0x12)
 	have := c.SP
-	if want != have {
-		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
-	}
-}
-
-func TestTxsZero(t *testing.T) {
-	c := newTestCPU()
-	c.mem.Store(0x0200, 0x9a)
-	c.X = 0x00
-	c.Run()
-	want := flagZ | flagB | flag5
-	have := c.SR()
-	if want != have {
-		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
-	}
-}
-
-func TestTxsSigned(t *testing.T) {
-	c := newTestCPU()
-	c.mem.Store(0x0200, 0x9a)
-	c.X = 0xff
-	c.Run()
-	want := flagN | flagB | flag5
-	have := c.SR()
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
 	}

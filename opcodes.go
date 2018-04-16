@@ -5,6 +5,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x01: func(c *CPU) { ora(c, c.loadIndirectX) },
 	0x05: func(c *CPU) { ora(c, c.loadZeroPage) },
 	0x06: func(c *CPU) { asl(c, c.loadZeroPage) },
+	0x08: func(c *CPU) { c.push(c.SR()) }, // php
 	0x09: func(c *CPU) { ora(c, c.loadImmediate) },
 	0x0a: func(c *CPU) { asl(c, c.loadAccumulator) },
 	0x0d: func(c *CPU) { ora(c, c.loadAbsolute) },
@@ -24,6 +25,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x24: func(c *CPU) { bit(c, c.loadZeroPage) },
 	0x25: func(c *CPU) { and(c, c.loadZeroPage) },
 	0x26: func(c *CPU) { rol(c, c.loadZeroPage) },
+	0x28: func(c *CPU) { c.SetSR(c.pull()) }, // plp
 	0x29: func(c *CPU) { and(c, c.loadImmediate) },
 	0x2a: func(c *CPU) { rol(c, c.loadAccumulator) },
 	0x2c: func(c *CPU) { bit(c, c.loadAbsolute) },
@@ -43,6 +45,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x41: func(c *CPU) { eor(c, c.loadIndirectX) },
 	0x45: func(c *CPU) { eor(c, c.loadZeroPage) },
 	0x46: func(c *CPU) { lsr(c, c.loadZeroPage) },
+	0x48: func(c *CPU) { c.push(c.A) }, // pha
 	0x49: func(c *CPU) { eor(c, c.loadImmediate) },
 	0x4a: func(c *CPU) { lsr(c, c.loadAccumulator) },
 	0x4c: func(c *CPU) { jmp(c) },
@@ -62,6 +65,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x61: func(c *CPU) { adc(c, c.loadIndirectX) },
 	0x65: func(c *CPU) { adc(c, c.loadZeroPage) },
 	0x66: func(c *CPU) { ror(c, c.loadZeroPage) },
+	0x68: func(c *CPU) { pla(c) },
 	0x69: func(c *CPU) { adc(c, c.loadImmediate) },
 	0x6a: func(c *CPU) { ror(c, c.loadAccumulator) },
 	0x6c: func(c *CPU) { jmpIndirect(c) },
@@ -94,7 +98,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x96: func(c *CPU) { stx(c, c.storeZeroPageY) },
 	0x98: func(c *CPU) { transfer(c, c.Y, &c.A) },
 	0x99: func(c *CPU) { sta(c, c.storeAbsoluteY) },
-	0x9a: func(c *CPU) { transfer(c, c.X, &c.SP) }, // txs
+	0x9a: func(c *CPU) { c.SP = c.X }, // txs
 	0x9d: func(c *CPU) { sta(c, c.storeAbsoluteX) },
 
 	0xa0: func(c *CPU) { ldy(c, c.loadImmediate) },

@@ -155,6 +155,11 @@ func ora(c *CPU, load loader) {
 	c.setFlagsNZ(c.A)
 }
 
+func pla(c *CPU) {
+	c.A = c.pull()
+	c.setFlagsNZ(c.A)
+}
+
 func rol(c *CPU, load loader) {
 	value, store := load()
 	rotate := uint8(0)
