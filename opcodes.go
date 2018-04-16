@@ -142,15 +142,23 @@ var opcodes = map[uint8]func(c *CPU){
 	0xde: func(c *CPU) { dec(c, c.loadAbsoluteX) },
 
 	0xe0: func(c *CPU) { cmp(c, c.X, c.loadImmediate) },
+	0xe1: func(c *CPU) { sbc(c, c.loadIndirectX) },
 	0xe4: func(c *CPU) { cmp(c, c.X, c.loadZeroPage) },
+	0xe5: func(c *CPU) { sbc(c, c.loadZeroPage) },
 	0xe6: func(c *CPU) { inc(c, c.loadZeroPage) },
 	0xe8: func(c *CPU) { inx(c) },
+	0xe9: func(c *CPU) { sbc(c, c.loadImmediate) },
 	0xea: func(c *CPU) {}, // nop
 	0xec: func(c *CPU) { cmp(c, c.X, c.loadAbsolute) },
+	0xed: func(c *CPU) { sbc(c, c.loadAbsolute) },
 	0xee: func(c *CPU) { inc(c, c.loadAbsolute) },
 
 	0xf0: func(c *CPU) { branch(c, c.Z) }, // beq
+	0xf1: func(c *CPU) { sbc(c, c.loadIndirectY) },
+	0xf5: func(c *CPU) { sbc(c, c.loadZeroPageX) },
 	0xf6: func(c *CPU) { inc(c, c.loadZeroPageX) },
 	0xf8: func(c *CPU) { c.D = true }, // sed
+	0xf9: func(c *CPU) { sbc(c, c.loadAbsoluteY) },
+	0xfd: func(c *CPU) { sbc(c, c.loadAbsoluteX) },
 	0xfe: func(c *CPU) { inc(c, c.loadAbsoluteX) },
 }

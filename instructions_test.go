@@ -2372,9 +2372,267 @@ func TestRts(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// sbc
+// ----------------------------------------------------------------------------
+func TestSbcImmediate(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
+	c.A = 0x08
+	c.C = true
+	c.Run()
+	want := uint8(0x06)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagC | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestAdcWithBorrow(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
+	c.A = 0x08
+	c.C = false
+	c.Run()
+	want := uint8(0x05)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagC | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestSbcCarryResult(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
+	c.A = 0x01
+	c.C = true
+	c.Run()
+	want := uint8(0xff)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestSbcZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
+	c.A = 0x02
+	c.C = true
+	c.Run()
+	want := uint8(0x00)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagZ | flagC | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestSbcOverflowSet(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
+	c.A = 0x81
+	c.C = true
+	c.Run()
+	want := uint8(0x7f)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagV | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestSbcOverflowClear(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0xff) // sbc #$ff (-1)
+	c.A = 0x82
+	c.C = true
+	c.V = true
+	c.Run()
+	want := uint8(0x83)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+	want = flagN | flagB | flag5
+	have = c.SR()
+	if want != have {
+		flagError(t, want, have)
+	}
+}
+
+func TestSbcBcd(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc $#02
+	c.D = true
+	c.C = true
+	c.A = 0x11
+	c.Run()
+	want := uint8(0x09)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcBcdWithBorrow(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0x02) // lda $#02
+	c.D = true
+	c.C = false
+	c.A = 0x11
+	c.Run()
+	want := uint8(0x08)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcBcdBorrowResult(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
+	c.D = true
+	c.C = true
+	c.A = 0x01
+	c.Run()
+	want := uint8(0x99)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcZeroPage(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0034, 0x08)        // .byte $08
+	c.mem.StoreN(0x0200, 0xe5, 0x34) // sbc $34
+	c.A = 0x0a
+	c.C = true
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcZeroPageX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0034, 0x08)        // .byte $08
+	c.mem.StoreN(0x0200, 0xf5, 0x30) // sbc $30,X
+	c.A = 0x0a
+	c.X = 0x04
+	c.C = true
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcAbsolute(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x08)              // .byte $08
+	c.mem.StoreN(0x0200, 0xed, 0xab, 0x02) // sbc $02ab
+	c.A = 0x0a
+	c.C = true
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcAbsoluteX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x08)              // .byte $08
+	c.mem.StoreN(0x0200, 0xfd, 0xa0, 0x02) // sbc $02a0,X
+	c.A = 0x0a
+	c.X = 0x0b
+	c.C = true
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcAbsoluteY(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x02ab, 0x08)              // .byte $08
+	c.mem.StoreN(0x0200, 0xf9, 0xa0, 0x02) // sbc $02a0,Y
+	c.A = 0x0a
+	c.Y = 0x0b
+	c.C = true
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcIndirectX(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x4a, 0x02ab)      // .word $02ab
+	c.mem.Store(0x02ab, 0x08)        // .byte $08
+	c.mem.StoreN(0x0200, 0xe1, 0x40) // sbc ($40,X)
+	c.A = 0x0a
+	c.X = 0x0a
+	c.C = true
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestSbcIndirectY(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store16(0x4a, 0x02a0)      // .word $02a0
+	c.mem.Store(0x02ab, 0x08)        // .byte $08
+	c.mem.StoreN(0x0200, 0xf1, 0x4a) // sbc ($4a),Y
+	c.A = 0x0a
+	c.Y = 0x0b
+	c.C = true
+	c.Run()
+	want := uint8(0x02)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // sta
 // ----------------------------------------------------------------------------
-
 func TestStaZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x85, 0x34) // sta $34

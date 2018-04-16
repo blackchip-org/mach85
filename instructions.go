@@ -184,6 +184,33 @@ func rti(c *CPU) {
 	c.PC = c.pull16() - 1
 }
 
+func sbc(c *CPU, load loader) {
+	v1 := c.A
+	v2, _ := load()
+	if c.D {
+		v1 = fromBCD(v1)
+		v2 = fromBCD(v2)
+	}
+	utotal := uint16(v1) - uint16(v2)
+	total := int16(int8(v1)) - int16(int8(v2))
+	// borrow if carry is clear
+	if !c.C {
+		utotal--
+		total--
+	}
+	c.C = total >= 0
+	if c.D {
+		if total < 0 {
+			total += 100
+		}
+		c.A = toBCD(uint8(total))
+	} else {
+		c.V = total < -128 || total > 127
+		c.A = uint8(utotal)
+	}
+	c.setFlagsNZ(c.A)
+}
+
 func sta(c *CPU, store storer) {
 	store(c.A)
 }
