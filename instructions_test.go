@@ -2885,6 +2885,45 @@ func TestTaySigned(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// tsx
+// ----------------------------------------------------------------------------
+func TestTsx(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0xba)
+	c.SP = 0x12
+	c.Run()
+	want := uint8(0x12)
+	have := c.X
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestTsxZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0xba)
+	c.SP = 0x00
+	c.Run()
+	want := flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestTsxSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0xba)
+	c.SP = 0xff
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // txa
 // ----------------------------------------------------------------------------
 func TestTxa(t *testing.T) {
@@ -2914,6 +2953,45 @@ func TestTxaZero(t *testing.T) {
 func TestTxaSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x8a)
+	c.X = 0xff
+	c.Run()
+	want := flagN | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// txs
+// ----------------------------------------------------------------------------
+func TestTxs(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0x9a)
+	c.X = 0x12
+	c.Run()
+	want := uint8(0x12)
+	have := c.SP
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestTxsZero(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0x9a)
+	c.X = 0x00
+	c.Run()
+	want := flagZ | flagB | flag5
+	have := c.SR()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
+	}
+}
+
+func TestTxsSigned(t *testing.T) {
+	c := newTestCPU()
+	c.mem.Store(0x0200, 0x9a)
 	c.X = 0xff
 	c.Run()
 	want := flagN | flagB | flag5

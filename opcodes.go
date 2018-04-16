@@ -94,6 +94,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0x96: func(c *CPU) { stx(c, c.storeZeroPageY) },
 	0x98: func(c *CPU) { transfer(c, c.Y, &c.A) },
 	0x99: func(c *CPU) { sta(c, c.storeAbsoluteY) },
+	0x9a: func(c *CPU) { transfer(c, c.X, &c.SP) }, // txs
 	0x9d: func(c *CPU) { sta(c, c.storeAbsoluteX) },
 
 	0xa0: func(c *CPU) { ldy(c, c.loadImmediate) },
@@ -116,6 +117,7 @@ var opcodes = map[uint8]func(c *CPU){
 	0xb6: func(c *CPU) { ldx(c, c.loadZeroPageY) },
 	0xb8: func(c *CPU) { c.V = false }, // clv
 	0xb9: func(c *CPU) { lda(c, c.loadAbsoluteY) },
+	0xba: func(c *CPU) { transfer(c, c.SP, &c.X) }, // tsx
 	0xbd: func(c *CPU) { lda(c, c.loadAbsoluteX) },
 	0xbc: func(c *CPU) { ldy(c, c.loadAbsoluteX) },
 	0xbe: func(c *CPU) { ldx(c, c.loadAbsoluteY) },
