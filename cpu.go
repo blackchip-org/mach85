@@ -111,11 +111,11 @@ func (c *CPU) Next() {
 	if c.Trace {
 		log.Printf("exec %04x: %02x\n", c.PC, opcode)
 	}
-	exec, ok := opcodes[opcode]
+	execute, ok := executors[opcode]
 	if !ok {
 		log.Printf("$%04x: illegal opcode: $%02x", c.PC, opcode)
 	} else {
-		exec(c)
+		execute(c)
 	}
 }
 
