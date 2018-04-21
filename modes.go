@@ -40,7 +40,6 @@ var operandFormats = map[Mode]string{
 	AbsoluteY:   "$04x,y",
 	Accumulator: "a",
 	Immediate:   "#$%02x",
-	Implied:     "",
 	Indirect:    "($%04x)",
 	IndirectX:   "($%02x,x)",
 	IndirectY:   "($%02x),y",

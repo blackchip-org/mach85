@@ -1,177 +1,304 @@
 package mach85
 
+type Instruction int
+
+// Instructions
+const (
+	Illegal Instruction = iota // illegal instruction
+	Adc                        // add with carry
+	And                        // bitwise And with accumulator
+	Asl                        // arithmetic shift left
+	Bit                        // test bits
+	Bmi                        // branch on minus
+	Bcc                        // branch on carry clear
+	Bcs                        // branch on carry set
+	Beq                        // branch on equal
+	Bne                        // branch on not equal
+	Bpl                        // branch on plus
+	Brk                        // break
+	Bvc                        // branch on overflow clear
+	Bvs                        // branch on overflow set
+	Clc                        // clear carry
+	Cld                        // clear decimal mode
+	Cli                        // clear interrupt
+	Clv                        // clear overflow
+	Cmp                        // compare accumulator
+	Cpx                        // compare x register
+	Cpy                        // compare y register
+	Dec                        // decrement memory
+	Dex                        // decrement x
+	Dey                        // decrement y
+	Eor                        // bitwise exclusive or
+	Inc                        // increment memory
+	Inx                        // increment x
+	Iny                        // increment y
+	Jmp                        // jump
+	Jsr                        // jump to subroutine
+	Lda                        // load accumulator
+	Ldx                        // load x register
+	Ldy                        // load y register
+	Lsr                        // logical shift right
+	Nop                        // no operation
+	Ora                        // bitwise or with accumulator
+	Pha                        // push accumulator
+	Php                        // push processor status
+	Pla                        // pull accumulator
+	Plp                        // pull processor status
+	Rol                        // rotate left
+	Ror                        // rotate right
+	Rti                        // return from interrupt
+	Rts                        // return from subroutine
+	Sbc                        // subrtact with carry
+	Sec                        // set carry
+	Sed                        // set decimal mode
+	Sei                        // set interrupt
+	Sta                        // store accumulator
+	Stx                        // store x register
+	Sty                        // store y register
+	Tax                        // transfer a to x
+	Tay                        // transfer a to y
+	Tsx                        // transfer stack pointer to x
+	Txs                        // transfer x to stack pointer
+	Txa                        // transfer x to a
+	Tya                        // transfer y to a
+)
+
+var instructionStrings = map[Instruction]string{
+	Illegal: "???",
+	Adc:     "adc",
+	And:     "and",
+	Asl:     "asl",
+	Bit:     "bit",
+	Bmi:     "bmi",
+	Bcc:     "bcc",
+	Bcs:     "bcs",
+	Beq:     "beq",
+	Bne:     "bne",
+	Bpl:     "bpl",
+	Brk:     "brk",
+	Bvc:     "bvc",
+	Bvs:     "bvs",
+	Clc:     "clc",
+	Cld:     "cld",
+	Cli:     "cli",
+	Clv:     "clv",
+	Cmp:     "cmp",
+	Cpx:     "cpx",
+	Cpy:     "cpy",
+	Dec:     "dec",
+	Dex:     "dex",
+	Dey:     "dey",
+	Eor:     "eor",
+	Inc:     "inc",
+	Inx:     "inx",
+	Iny:     "iny",
+	Jmp:     "jmp",
+	Jsr:     "jsr",
+	Lda:     "lda",
+	Ldx:     "ldx",
+	Ldy:     "ldy",
+	Lsr:     "lsr",
+	Nop:     "nop",
+	Ora:     "ora",
+	Pha:     "pha",
+	Php:     "php",
+	Pla:     "pla",
+	Plp:     "plp",
+	Rol:     "rol",
+	Ror:     "ror",
+	Rti:     "rti",
+	Rts:     "rts",
+	Sbc:     "sbc",
+	Sec:     "sec",
+	Sed:     "sed",
+	Sei:     "sei",
+	Sta:     "sta",
+	Stx:     "stx",
+	Sty:     "sty",
+	Tax:     "tax",
+	Tay:     "tay",
+	Tsx:     "tsx",
+	Txs:     "txs",
+	Txa:     "txa",
+	Tya:     "tya",
+}
+
+func (i Instruction) String() string {
+	return instructionStrings[i]
+}
+
 type op struct {
-	inst string
+	inst Instruction
 	mode Mode
 }
 
 var opcodes = map[uint8]op{
-	0x00: op{"brk", Implied},
-	0x01: op{"ora", IndirectX},
-	0x05: op{"ora", ZeroPage},
-	0x06: op{"asl", ZeroPage},
-	0x08: op{"php", Implied},
-	0x09: op{"ora", Immediate},
-	0x0a: op{"asl", Accumulator},
-	0x0d: op{"ora", Absolute},
-	0x0e: op{"asl", Absolute},
+	0x00: op{Brk, Implied},
+	0x01: op{Ora, IndirectX},
+	0x05: op{Ora, ZeroPage},
+	0x06: op{Asl, ZeroPage},
+	0x08: op{Php, Implied},
+	0x09: op{Ora, Immediate},
+	0x0a: op{Asl, Accumulator},
+	0x0d: op{Ora, Absolute},
+	0x0e: op{Asl, Absolute},
 
-	0x10: op{"bpl", Relative},
-	0x11: op{"ora", IndirectY},
-	0x15: op{"ora", ZeroPageX},
-	0x16: op{"asl", ZeroPageX},
-	0x18: op{"clc", Implied},
-	0x19: op{"ora", AbsoluteY},
-	0x1d: op{"ora", AbsoluteX},
-	0x1e: op{"asl", AbsoluteX},
+	0x10: op{Bpl, Relative},
+	0x11: op{Ora, IndirectY},
+	0x15: op{Ora, ZeroPageX},
+	0x16: op{Asl, ZeroPageX},
+	0x18: op{Clc, Implied},
+	0x19: op{Ora, AbsoluteY},
+	0x1d: op{Ora, AbsoluteX},
+	0x1e: op{Asl, AbsoluteX},
 
-	0x20: op{"jsr", Absolute},
-	0x21: op{"and", IndirectX},
-	0x24: op{"bit", ZeroPage},
-	0x25: op{"and", ZeroPage},
-	0x26: op{"rol", ZeroPage},
-	0x28: op{"plp", Implied},
-	0x29: op{"and", Immediate},
-	0x2a: op{"rol", Accumulator},
-	0x2c: op{"bit", Absolute},
-	0x2d: op{"and", Absolute},
-	0x2e: op{"rol", Absolute},
+	0x20: op{Jsr, Absolute},
+	0x21: op{And, IndirectX},
+	0x24: op{Bit, ZeroPage},
+	0x25: op{And, ZeroPage},
+	0x26: op{Rol, ZeroPage},
+	0x28: op{Plp, Implied},
+	0x29: op{And, Immediate},
+	0x2a: op{Rol, Accumulator},
+	0x2c: op{Bit, Absolute},
+	0x2d: op{And, Absolute},
+	0x2e: op{Rol, Absolute},
 
-	0x30: op{"bmi", Relative},
-	0x31: op{"and", IndirectY},
-	0x35: op{"and", ZeroPageX},
-	0x36: op{"rol", ZeroPageX},
-	0x38: op{"sec", Implied},
-	0x39: op{"and", AbsoluteY},
-	0x3d: op{"and", AbsoluteX},
-	0x3e: op{"rol", AbsoluteX},
+	0x30: op{Bmi, Relative},
+	0x31: op{And, IndirectY},
+	0x35: op{And, ZeroPageX},
+	0x36: op{Rol, ZeroPageX},
+	0x38: op{Sec, Implied},
+	0x39: op{And, AbsoluteY},
+	0x3d: op{And, AbsoluteX},
+	0x3e: op{Rol, AbsoluteX},
 
-	0x40: op{"rti", Implied},
-	0x41: op{"eor", IndirectX},
-	0x45: op{"eor", ZeroPage},
-	0x46: op{"lsr", ZeroPage},
-	0x48: op{"pha", Implied},
-	0x49: op{"eor", Immediate},
-	0x4a: op{"lsr", Accumulator},
-	0x4c: op{"jmp", Absolute},
-	0x4d: op{"eor", Absolute},
-	0x4e: op{"lsr", Absolute},
+	0x40: op{Rti, Implied},
+	0x41: op{Eor, IndirectX},
+	0x45: op{Eor, ZeroPage},
+	0x46: op{Lsr, ZeroPage},
+	0x48: op{Pha, Implied},
+	0x49: op{Eor, Immediate},
+	0x4a: op{Lsr, Accumulator},
+	0x4c: op{Jmp, Absolute},
+	0x4d: op{Eor, Absolute},
+	0x4e: op{Lsr, Absolute},
 
-	0x50: op{"bvc", Relative},
-	0x51: op{"eor", IndirectY},
-	0x55: op{"eor", ZeroPageX},
-	0x56: op{"lsr", ZeroPageX},
-	0x58: op{"cli", Implied},
-	0x59: op{"eor", AbsoluteY},
-	0x5d: op{"eor", AbsoluteX},
-	0x5e: op{"lsr", AbsoluteX},
+	0x50: op{Bvc, Relative},
+	0x51: op{Eor, IndirectY},
+	0x55: op{Eor, ZeroPageX},
+	0x56: op{Lsr, ZeroPageX},
+	0x58: op{Cli, Implied},
+	0x59: op{Eor, AbsoluteY},
+	0x5d: op{Eor, AbsoluteX},
+	0x5e: op{Lsr, AbsoluteX},
 
-	0x60: op{"rts", Implied},
-	0x61: op{"adc", IndirectX},
-	0x65: op{"adc", ZeroPage},
-	0x66: op{"ror", ZeroPage},
-	0x68: op{"pla", Implied},
-	0x69: op{"adc", Immediate},
-	0x6a: op{"ror", Accumulator},
-	0x6c: op{"jmp", Indirect},
-	0x6d: op{"adc", Absolute},
-	0x6e: op{"ror", Absolute},
+	0x60: op{Rts, Implied},
+	0x61: op{Adc, IndirectX},
+	0x65: op{Adc, ZeroPage},
+	0x66: op{Ror, ZeroPage},
+	0x68: op{Pla, Implied},
+	0x69: op{Adc, Immediate},
+	0x6a: op{Ror, Accumulator},
+	0x6c: op{Jmp, Indirect},
+	0x6d: op{Adc, Absolute},
+	0x6e: op{Ror, Absolute},
 
-	0x70: op{"bvs", Relative},
-	0x71: op{"adc", IndirectY},
-	0x75: op{"adc", ZeroPageX},
-	0x76: op{"ror", ZeroPageX},
-	0x78: op{"sei", Implied},
-	0x79: op{"adc", AbsoluteY},
-	0x7d: op{"adc", AbsoluteX},
-	0x7e: op{"ror", AbsoluteX},
+	0x70: op{Bvs, Relative},
+	0x71: op{Adc, IndirectY},
+	0x75: op{Adc, ZeroPageX},
+	0x76: op{Ror, ZeroPageX},
+	0x78: op{Sei, Implied},
+	0x79: op{Adc, AbsoluteY},
+	0x7d: op{Adc, AbsoluteX},
+	0x7e: op{Ror, AbsoluteX},
 
-	0x81: op{"sta", IndirectX},
-	0x84: op{"sty", ZeroPage},
-	0x85: op{"sta", ZeroPage},
-	0x86: op{"stx", ZeroPage},
-	0x88: op{"dey", Implied},
-	0x8a: op{"txa", Implied},
-	0x8c: op{"sty", Absolute},
-	0x8d: op{"sta", Absolute},
-	0x8e: op{"stx", Absolute},
+	0x81: op{Sta, IndirectX},
+	0x84: op{Sty, ZeroPage},
+	0x85: op{Sta, ZeroPage},
+	0x86: op{Stx, ZeroPage},
+	0x88: op{Dey, Implied},
+	0x8a: op{Txa, Implied},
+	0x8c: op{Sty, Absolute},
+	0x8d: op{Sta, Absolute},
+	0x8e: op{Stx, Absolute},
 
-	0x90: op{"bcc", Relative},
-	0x91: op{"sta", IndirectY},
-	0x94: op{"sty", ZeroPageX},
-	0x95: op{"sta", ZeroPageX},
-	0x96: op{"stx", ZeroPageY},
-	0x98: op{"tya", Implied},
-	0x99: op{"sta", AbsoluteY},
-	0x9a: op{"txs", Implied},
-	0x9d: op{"sta", AbsoluteX},
+	0x90: op{Bcc, Relative},
+	0x91: op{Sta, IndirectY},
+	0x94: op{Sty, ZeroPageX},
+	0x95: op{Sta, ZeroPageX},
+	0x96: op{Stx, ZeroPageY},
+	0x98: op{Tya, Implied},
+	0x99: op{Sta, AbsoluteY},
+	0x9a: op{Txs, Implied},
+	0x9d: op{Sta, AbsoluteX},
 
-	0xa0: op{"ldy", Immediate},
-	0xa1: op{"lda", IndirectX},
-	0xa2: op{"ldx", Immediate},
-	0xa4: op{"ldy", ZeroPage},
-	0xa5: op{"lda", ZeroPage},
-	0xa6: op{"ldx", ZeroPage},
-	0xa8: op{"tay", Implied},
-	0xa9: op{"lda", Immediate},
-	0xaa: op{"tax", Implied},
-	0xac: op{"ldy", Absolute},
-	0xad: op{"lda", Absolute},
-	0xae: op{"ldx", Absolute},
+	0xa0: op{Ldy, Immediate},
+	0xa1: op{Lda, IndirectX},
+	0xa2: op{Ldx, Immediate},
+	0xa4: op{Ldy, ZeroPage},
+	0xa5: op{Lda, ZeroPage},
+	0xa6: op{Ldx, ZeroPage},
+	0xa8: op{Tay, Implied},
+	0xa9: op{Lda, Immediate},
+	0xaa: op{Tax, Implied},
+	0xac: op{Ldy, Absolute},
+	0xad: op{Lda, Absolute},
+	0xae: op{Ldx, Absolute},
 
-	0xb0: op{"bcs", Relative},
-	0xb1: op{"lda", IndirectY},
-	0xb4: op{"ldy", ZeroPageX},
-	0xb5: op{"lda", ZeroPageX},
-	0xb6: op{"ldx", ZeroPageY},
-	0xb8: op{"clv", Implied},
-	0xb9: op{"lda", AbsoluteY},
-	0xba: op{"tsx", Implied},
-	0xbd: op{"lda", AbsoluteX},
-	0xbc: op{"ldy", AbsoluteX},
-	0xbe: op{"ldx", AbsoluteY},
+	0xb0: op{Bcs, Relative},
+	0xb1: op{Lda, IndirectY},
+	0xb4: op{Ldy, ZeroPageX},
+	0xb5: op{Lda, ZeroPageX},
+	0xb6: op{Ldx, ZeroPageY},
+	0xb8: op{Clv, Implied},
+	0xb9: op{Lda, AbsoluteY},
+	0xba: op{Tsx, Implied},
+	0xbd: op{Lda, AbsoluteX},
+	0xbc: op{Ldy, AbsoluteX},
+	0xbe: op{Ldx, AbsoluteY},
 
-	0xc0: op{"cpy", Immediate},
-	0xc1: op{"cmp", IndirectX},
-	0xc4: op{"cpy", ZeroPage},
-	0xc5: op{"cmp", ZeroPage},
-	0xc6: op{"dec", ZeroPage},
-	0xc8: op{"iny", Implied},
-	0xc9: op{"cmp", Immediate},
-	0xca: op{"dex", Implied},
-	0xcc: op{"cpx", Absolute},
-	0xcd: op{"cmp", Absolute},
-	0xce: op{"dec", Absolute},
+	0xc0: op{Cpy, Immediate},
+	0xc1: op{Cmp, IndirectX},
+	0xc4: op{Cpy, ZeroPage},
+	0xc5: op{Cmp, ZeroPage},
+	0xc6: op{Dec, ZeroPage},
+	0xc8: op{Iny, Implied},
+	0xc9: op{Cmp, Immediate},
+	0xca: op{Dex, Implied},
+	0xcc: op{Cpx, Absolute},
+	0xcd: op{Cmp, Absolute},
+	0xce: op{Dec, Absolute},
 
-	0xd0: op{"bne", Relative},
-	0xd1: op{"cmp", IndirectY},
-	0xd5: op{"cmp", ZeroPageX},
-	0xd6: op{"dec", ZeroPageX},
-	0xd8: op{"cld", Implied},
-	0xd9: op{"cmp", AbsoluteY},
-	0xdd: op{"cmp", AbsoluteX},
-	0xde: op{"dec", AbsoluteX},
+	0xd0: op{Bne, Relative},
+	0xd1: op{Cmp, IndirectY},
+	0xd5: op{Cmp, ZeroPageX},
+	0xd6: op{Dec, ZeroPageX},
+	0xd8: op{Cld, Implied},
+	0xd9: op{Cmp, AbsoluteY},
+	0xdd: op{Cmp, AbsoluteX},
+	0xde: op{Dec, AbsoluteX},
 
-	0xe0: op{"cpx", Immediate},
-	0xe1: op{"sbc", IndirectX},
-	0xe4: op{"cpx", ZeroPage},
-	0xe5: op{"sbc", ZeroPage},
-	0xe6: op{"inc", ZeroPage},
-	0xe8: op{"inx", Implied},
-	0xe9: op{"sbc", Immediate},
-	0xea: op{"nop", Implied},
-	0xec: op{"cpx", Absolute},
-	0xed: op{"sbc", Absolute},
-	0xee: op{"inc", Absolute},
+	0xe0: op{Cpx, Immediate},
+	0xe1: op{Sbc, IndirectX},
+	0xe4: op{Cpx, ZeroPage},
+	0xe5: op{Sbc, ZeroPage},
+	0xe6: op{Inc, ZeroPage},
+	0xe8: op{Inx, Implied},
+	0xe9: op{Sbc, Immediate},
+	0xea: op{Nop, Implied},
+	0xec: op{Cpx, Absolute},
+	0xed: op{Sbc, Absolute},
+	0xee: op{Inc, Absolute},
 
-	0xf0: op{"beq", Relative},
-	0xf1: op{"sbc", IndirectY},
-	0xf5: op{"sbc", ZeroPageX},
-	0xf6: op{"inc", ZeroPageX},
-	0xf8: op{"sed", Implied},
-	0xf9: op{"sbc", AbsoluteY},
-	0xfd: op{"sbc", AbsoluteX},
-	0xfe: op{"inc", AbsoluteX},
+	0xf0: op{Beq, Relative},
+	0xf1: op{Sbc, IndirectY},
+	0xf5: op{Sbc, ZeroPageX},
+	0xf6: op{Inc, ZeroPageX},
+	0xf8: op{Sed, Implied},
+	0xf9: op{Sbc, AbsoluteY},
+	0xfd: op{Sbc, AbsoluteX},
+	0xfe: op{Inc, AbsoluteX},
 }
 
 var executors = map[uint8]func(c *CPU){
