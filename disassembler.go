@@ -1,6 +1,9 @@
 package mach85
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Operation struct {
 	Address     uint16
@@ -70,7 +73,25 @@ func (o Operation) String() string {
 	format, ok := operandFormats[o.Mode]
 	operand := ""
 	if ok {
-		operand = " " + fmt.Sprintf(format, o.Operand)
+		// If this is a branch instruction, the value of the operand needs to be
+		// added to the current addresss. Add two as it is relative after consuming
+		// the instruction
+		value := o.Operand
+		if o.Mode == Relative {
+			value8 := int8(value)
+			if value8 >= 0 {
+				value = o.Address + uint16(value8) + 2
+			} else {
+				value = o.Address - uint16(value8*-1) + 2
+			}
+		}
+		// If the format does not contain a formatting directive, just use as is.
+		// For example: "asl a"
+		if strings.Contains(format, "%") {
+			operand = " " + fmt.Sprintf(format, value)
+		} else {
+			operand = " " + format
+		}
 	}
-	return fmt.Sprintf("$%04x: %v %v %v %v%v", o.Address, b0, b1, b2, o.Instruction, operand)
+	return fmt.Sprintf("$%04x: %v %v %v  %v%v", o.Address, b0, b1, b2, o.Instruction, operand)
 }

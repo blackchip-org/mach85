@@ -266,7 +266,7 @@ var opcodes = map[uint8]op{
 	0xc8: op{Iny, Implied},
 	0xc9: op{Cmp, Immediate},
 	0xca: op{Dex, Implied},
-	0xcc: op{Cpx, Absolute},
+	0xcc: op{Cpy, Absolute},
 	0xcd: op{Cmp, Absolute},
 	0xce: op{Dec, Absolute},
 

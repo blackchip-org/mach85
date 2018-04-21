@@ -36,8 +36,8 @@ var operandLengths = map[Mode]int{
 
 var operandFormats = map[Mode]string{
 	Absolute:    "$%04x",
-	AbsoluteX:   "$04x,x",
-	AbsoluteY:   "$04x,y",
+	AbsoluteX:   "$%04x,x",
+	AbsoluteY:   "$%04x,y",
 	Accumulator: "a",
 	Immediate:   "#$%02x",
 	Indirect:    "($%04x)",
