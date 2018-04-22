@@ -83,3 +83,9 @@ func (m *Memory) Dump(start uint16, end uint16) string {
 	}
 	return buf.String()
 }
+
+func (m *Memory) Import(address uint16, data []uint8) {
+	for i, value := range data {
+		m.Store(address+uint16(i), value)
+	}
+}

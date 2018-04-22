@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	Stack = uint16(0x0100)
+	Stack       = uint16(0x0100)
+	ResetVector = uint16(0xfffc)
 )
 
 // CPU is the MOS Technology 6502 processor.
@@ -27,11 +28,13 @@ type CPU struct {
 
 	Trace bool
 	mem   *Memory
+	dasm  *Disassembler
 }
 
 func NewCPU(mem *Memory) *CPU {
 	return &CPU{
-		mem: mem,
+		mem:  mem,
+		dasm: NewDisassembler(mem),
 	}
 }
 
@@ -106,11 +109,18 @@ func (c *CPU) pull16() uint16 {
 	return uint16(c.pull()) | uint16(c.pull())<<8
 }
 
+func (c *CPU) Reset() {
+	// Vector is actual start address so set the PC one byte behind
+	c.PC = c.mem.Load16(ResetVector) - 1
+}
+
 func (c *CPU) Next() {
-	opcode := c.fetch()
 	if c.Trace {
-		log.Printf("exec %04x: %02x\n", c.PC, opcode)
+		c.dasm.PC = c.PC
+		op := c.dasm.Next()
+		fmt.Println(op)
 	}
+	opcode := c.fetch()
 	execute, ok := executors[opcode]
 	if !ok {
 		log.Printf("$%04x: illegal opcode: $%02x", c.PC, opcode)
