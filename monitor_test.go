@@ -2,6 +2,7 @@ package mach85
 
 import (
 	"bytes"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -11,7 +12,8 @@ func newTestMonitor() (*Monitor, *bytes.Buffer) {
 	mach := New()
 	mach.cpu.PC = 0x0800 - 1
 	mon := NewMonitor(mach)
-	mon.out = &out
+	mon.interactive = false
+	mon.out.SetOutput(&out)
 	return mon, &out
 }
 
@@ -75,6 +77,43 @@ func TestDisassembleLastLine(t *testing.T) {
 	want := "$080f: a9 34     lda #$34"
 	have := lines[len(lines)-1]
 	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestTrace(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.mach.mem.StoreN(0x0800,
+		0xa9, 0x34, // lda #$34
+	)
+	mon.in = strings.NewReader("t \n r")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := []string{
+		"tracing enabled",
+		"$0800: a9 34     lda #$34",
+		"$0802: 00        brk",
+	}
+	have := lines
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestTraceDisabled(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.mach.mem.StoreN(0x0800,
+		0xa9, 0x34, // lda #$34
+	)
+	mon.in = strings.NewReader("t \n t \n r")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := []string{
+		"tracing enabled",
+		"tracing disabled",
+	}
+	have := lines
+	if !reflect.DeepEqual(want, have) {
 		t.Errorf("\n want: %v \n have: %v \n", want, have)
 	}
 }

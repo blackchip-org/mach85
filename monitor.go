@@ -2,38 +2,42 @@ package mach85
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"strings"
 )
 
 type Monitor struct {
-	PageLen int
-	mach    *Mach85
-	in      io.Reader
-	out     io.Writer
-	dasm    *Disassembler
-	quit    bool
+	PageLen     int
+	mach        *Mach85
+	in          io.Reader
+	out         *log.Logger
+	dasm        *Disassembler
+	interactive bool
+	quit        bool
 }
 
 func NewMonitor(mach *Mach85) *Monitor {
-	return &Monitor{
-		PageLen: 0x10,
-		mach:    mach,
-		in:      os.Stdin,
-		out:     os.Stdout,
-		dasm:    NewDisassembler(mach.mem),
+	mon := &Monitor{
+		PageLen:     0x10,
+		mach:        mach,
+		in:          os.Stdin,
+		out:         log.New(os.Stdout, "", 0),
+		dasm:        NewDisassembler(mach.mem),
+		interactive: true,
 	}
+	return mon
 }
 
 func (m *Monitor) Run() {
 	s := bufio.NewScanner(m.in)
 	s.Split(bufio.ScanLines)
 	for {
-		// only show prompt when printing to the console
-		if m.out == os.Stdout {
+		if m.interactive {
 			fmt.Print("mach85> ")
 		}
 		if !s.Scan() {
@@ -49,68 +53,88 @@ func (m *Monitor) Run() {
 func (m *Monitor) parse(line string) {
 	line = strings.ToLower(line)
 	line = strings.TrimSpace(line)
-	s := bufio.NewScanner(strings.NewReader(line))
-	s.Split(bufio.ScanWords)
-	if !s.Scan() {
+	fields := strings.Split(line, " ")
+
+	if len(fields) == 0 {
 		return
 	}
-	cmd := s.Text()
+
+	cmd := fields[0]
+	args := fields[1:]
+	var err error
 	switch {
 	case strings.HasPrefix(cmd, "c"):
-		m.cpu(s)
+		err = m.cpu(args)
 	case strings.HasPrefix(cmd, "d"):
-		m.disassemble(s)
+		err = m.disassemble(args)
 	case strings.HasPrefix(cmd, "r"):
-		m.run(s)
+		err = m.run(args)
 	case strings.HasPrefix(cmd, "q"):
 		m.quit = true
 		return
+	case strings.HasPrefix(cmd, "t"):
+		err = m.trace(args)
 	case strings.HasPrefix(cmd, "z"):
-		m.reset(s)
+		err = m.reset(args)
 	default:
-		m.print("unknown command: %v\n", cmd)
+		err = fmt.Errorf("unknown command: %v", cmd)
+	}
+	if err != nil {
+		m.out.Println(err)
 	}
 }
 
-func (m *Monitor) cpu(s *bufio.Scanner) {
-	if s.Scan() {
-		m.print("too many arguments\n")
-		return
+func (m *Monitor) cpu(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
 	}
-	m.print(m.mach.cpu.String() + "\n")
+	m.out.Println(m.mach.cpu.String())
+	return nil
 }
 
-func (m *Monitor) disassemble(s *bufio.Scanner) {
-	if s.Scan() {
-		m.print("too many arguments\n")
-		return
+func (m *Monitor) disassemble(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
 	}
 	m.dasm.PC = m.mach.cpu.PC
 	for i := 0; i < m.PageLen; i++ {
-		m.print("%v\n", m.dasm.Next().String())
+		m.out.Println(m.dasm.Next().String())
 	}
+	return nil
 }
 
-func (m *Monitor) reset(s *bufio.Scanner) {
-	if s.Scan() {
-		m.print("too many arguments\n")
-		return
+func (m *Monitor) reset(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
 	}
 	go m.signalHandler()
 	m.mach.Reset()
+	return nil
 }
 
-func (m *Monitor) run(s *bufio.Scanner) {
-	if s.Scan() {
-		m.print("too many arguments\n")
-		return
+func (m *Monitor) run(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
 	}
 	go m.signalHandler()
 	m.mach.Run()
+	return nil
 }
 
-func (m *Monitor) print(format string, args ...interface{}) {
-	fmt.Fprintf(m.out, format, args...)
+func (m *Monitor) trace(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
+	}
+	if m.mach.cpu.Trace == nil {
+		m.mach.cpu.Trace = func(op Operation) {
+			m.out.Println(op)
+		}
+		m.out.Println("tracing enabled")
+	} else {
+		m.mach.cpu.Trace = nil
+		m.out.Println("tracing disabled")
+	}
+	return nil
 }
 
 func (m *Monitor) signalHandler() {
@@ -119,4 +143,14 @@ func (m *Monitor) signalHandler() {
 	<-c
 	signal.Reset(os.Interrupt)
 	m.mach.Stop()
+}
+
+func checkLen(args []string, min int, max int) error {
+	if len(args) < min {
+		return errors.New("not enough arguments")
+	}
+	if len(args) > max {
+		return errors.New("too many arguments")
+	}
+	return nil
 }

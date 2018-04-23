@@ -26,7 +26,7 @@ type CPU struct {
 	V bool // Overflow flag
 	N bool // Signed flag
 
-	Trace       bool
+	Trace       func(op Operation)
 	Breakpoints map[uint16]bool
 
 	mem  *Memory
@@ -120,10 +120,9 @@ func (c *CPU) Reset() {
 }
 
 func (c *CPU) Next() {
-	if c.Trace {
+	if c.Trace != nil {
 		c.dasm.PC = c.PC
-		op := c.dasm.Next()
-		fmt.Println(op)
+		c.Trace(c.dasm.Next())
 	}
 	opcode := c.fetch()
 	execute, ok := executors[opcode]
