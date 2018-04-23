@@ -63,33 +63,25 @@ func (m *Monitor) parse(line string) {
 	args := fields[1:]
 	var err error
 	switch {
-	case strings.HasPrefix(cmd, "c"):
-		err = m.cpu(args)
 	case strings.HasPrefix(cmd, "d"):
 		err = m.disassemble(args)
-	case strings.HasPrefix(cmd, "r"):
-		err = m.run(args)
+	case strings.HasPrefix(cmd, "g"):
+		err = m.goCmd(args)
 	case strings.HasPrefix(cmd, "q"):
 		m.quit = true
 		return
+	case cmd == "reset":
+		err = m.reset(args)
+	case strings.HasPrefix(cmd, "r"):
+		err = m.registers(args)
 	case strings.HasPrefix(cmd, "t"):
 		err = m.trace(args)
-	case strings.HasPrefix(cmd, "z"):
-		err = m.reset(args)
 	default:
 		err = fmt.Errorf("unknown command: %v", cmd)
 	}
 	if err != nil {
 		m.out.Println(err)
 	}
-}
-
-func (m *Monitor) cpu(args []string) error {
-	if err := checkLen(args, 0, 0); err != nil {
-		return err
-	}
-	m.out.Println(m.mach.cpu.String())
-	return nil
 }
 
 func (m *Monitor) disassemble(args []string) error {
@@ -103,6 +95,14 @@ func (m *Monitor) disassemble(args []string) error {
 	return nil
 }
 
+func (m *Monitor) registers(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
+	}
+	m.out.Println(m.mach.cpu.String())
+	return nil
+}
+
 func (m *Monitor) reset(args []string) error {
 	if err := checkLen(args, 0, 0); err != nil {
 		return err
@@ -112,7 +112,7 @@ func (m *Monitor) reset(args []string) error {
 	return nil
 }
 
-func (m *Monitor) run(args []string) error {
+func (m *Monitor) goCmd(args []string) error {
 	if err := checkLen(args, 0, 0); err != nil {
 		return err
 	}

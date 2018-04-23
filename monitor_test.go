@@ -17,13 +17,13 @@ func newTestMonitor() (*Monitor, *bytes.Buffer) {
 	return mon, &out
 }
 
-func TestRun(t *testing.T) {
+func TestGo(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.mach.mem.StoreN(0x0800,
 		0xa9, 0x12, // lda #$12
 		0x00, // brk
 	)
-	mon.in = strings.NewReader("r")
+	mon.in = strings.NewReader("g")
 	mon.Run()
 	want := uint8(0x12)
 	have := mon.mach.cpu.A
@@ -32,7 +32,7 @@ func TestRun(t *testing.T) {
 	}
 }
 
-func TestRunContinued(t *testing.T) {
+func TestGoContinued(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.mach.mem.StoreN(0x0800,
 		0xa9, 0x12, // lda #$12
@@ -41,7 +41,7 @@ func TestRunContinued(t *testing.T) {
 		0xa9, 0x34, // lda #34
 		0x00, // brk
 	)
-	mon.in = strings.NewReader("r\nr")
+	mon.in = strings.NewReader("g \n g")
 	mon.Run()
 	want := uint8(0x34)
 	have := mon.mach.cpu.A
@@ -86,7 +86,7 @@ func TestTrace(t *testing.T) {
 	mon.mach.mem.StoreN(0x0800,
 		0xa9, 0x34, // lda #$34
 	)
-	mon.in = strings.NewReader("t \n r")
+	mon.in = strings.NewReader("t \n g")
 	mon.Run()
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := []string{
@@ -105,7 +105,7 @@ func TestTraceDisabled(t *testing.T) {
 	mon.mach.mem.StoreN(0x0800,
 		0xa9, 0x34, // lda #$34
 	)
-	mon.in = strings.NewReader("t \n t \n r")
+	mon.in = strings.NewReader("t \n t \n g")
 	mon.Run()
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := []string{
