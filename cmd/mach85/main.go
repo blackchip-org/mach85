@@ -7,9 +7,10 @@ import (
 )
 
 func main() {
-	mach, err := mach85.New()
-	if err != nil {
+	mach := mach85.New()
+	if err := mach.LoadROM(); err != nil {
 		log.Fatal(err)
 	}
-	mach.Run()
+	mon := mach85.NewMonitor(mach)
+	mon.Run()
 }
