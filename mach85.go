@@ -1,6 +1,8 @@
 package mach85
 
 import (
+	"crypto/sha1"
+	"fmt"
 	"io/ioutil"
 	"log"
 )
@@ -11,11 +13,12 @@ type Mach85 struct {
 }
 
 var roms = []struct {
-	file    string
-	address uint16
+	file     string
+	address  uint16
+	checksum string
 }{
-	{"basic.rom", 0xa000},
-	{"kernal.rom", 0xe000},
+	{"basic.rom", 0xa000, "79015323128650c742a3694c9429aa91f355905e"},
+	{"kernal.rom", 0xe000, "1d503e56df85a62fee696e7618dc5b4e781df1bb"},
 }
 
 func New() *Mach85 {
@@ -33,6 +36,10 @@ func (m *Mach85) LoadROM() error {
 		data, err := ioutil.ReadFile(rom.file)
 		if err != nil {
 			return err
+		}
+		checksum := fmt.Sprintf("%x", sha1.Sum(data))
+		if checksum != rom.checksum {
+			return fmt.Errorf("%v: invalid checksum", rom.file)
 		}
 		m.mem.Import(rom.address, data)
 		log.Printf("$%04x: %v\n", rom.address, rom.file)
