@@ -65,7 +65,7 @@ func (m *Memory) Dump(start uint16, end uint16) string {
 		} else {
 			value := m.Load(addr)
 			buf.WriteString(fmt.Sprintf(" %02x", value))
-			if value >= 0x20 {
+			if value >= 0x20 && value < 0x80 {
 				chars.WriteString(fmt.Sprintf("%c", value))
 			} else {
 				chars.WriteString(".")

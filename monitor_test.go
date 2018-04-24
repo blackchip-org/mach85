@@ -213,6 +213,85 @@ func TestGoTooManyArguments(t *testing.T) {
 	}
 }
 
+func TestMemoryFirstLine(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.mach.mem.StoreN(0x0800,
+		0xa9, 0x12, // lda #$12
+		0x00, // brk
+	)
+	mon.in = strings.NewReader("m")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "$0800 a9 12 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestMemoryLastLine(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.mach.mem.StoreN(0x0800+uint16(dasmPageLen-1),
+		0xa9, 0x34, // lda #$34
+	)
+	mon.in = strings.NewReader("m")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$08f0 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestMemoryPage(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("m 0800")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$08f0 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestMemoryNextPage(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("m 0800 \n m \n m")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$0af0 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestMemoryRange(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("m 0800 081a")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$0810 00 00 00 00 00 00 00 00  00 00 00                ..........."
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestMemoryTooManyArguments(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("m 0800 0812 0812")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "too many arguments"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
 func TestTrace(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.mach.mem.StoreN(0x0800,
