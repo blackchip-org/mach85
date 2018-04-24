@@ -292,6 +292,97 @@ func TestMemoryTooManyArguments(t *testing.T) {
 	}
 }
 
+func TestPoke(t *testing.T) {
+	mon, _ := newTestMonitor()
+	mon.in = strings.NewReader("p 0900 ab")
+	mon.Run()
+	want := uint8(0xab)
+	have := mon.mem.Load(0x0900)
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestPokeOldHexSigil(t *testing.T) {
+	mon, _ := newTestMonitor()
+	mon.in = strings.NewReader("p 0900 $ab")
+	mon.Run()
+	want := uint8(0xab)
+	have := mon.mem.Load(0x0900)
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestPokeOldNewSigil(t *testing.T) {
+	mon, _ := newTestMonitor()
+	mon.in = strings.NewReader("p 0900 0xab")
+	mon.Run()
+	want := uint8(0xab)
+	have := mon.mem.Load(0x0900)
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestPokeDecimalSigil(t *testing.T) {
+	mon, _ := newTestMonitor()
+	mon.in = strings.NewReader("p 0900 +171")
+	mon.Run()
+	want := uint8(0xab)
+	have := mon.mem.Load(0x0900)
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestPokeInvalid(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("p 0900 foo")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "invalid value: foo"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestPokeOutOfRange(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("p 0900 1234")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "invalid value: 1234"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestPokeN(t *testing.T) {
+	mon, _ := newTestMonitor()
+	mon.in = strings.NewReader("p 0900 ab cd ef 12 34")
+	mon.Run()
+	want := uint8(0x34)
+	have := mon.mem.Load(0x0904)
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestPokeNotEnoughArguments(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("p")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "not enough arguments"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
 func TestTrace(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.mach.mem.StoreN(0x0800,
