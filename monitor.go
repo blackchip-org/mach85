@@ -25,7 +25,7 @@ const (
 
 var (
 	memPageLen  = 0x100
-	dasmPageLen = 0x40
+	dasmPageLen = 0x3f
 )
 
 type Monitor struct {
@@ -142,7 +142,7 @@ func (m *Monitor) disassemble(args []string) error {
 	for m.dasm.PC = addrStart; m.dasm.PC < addrEnd; {
 		m.out.Println(m.dasm.Next().String())
 	}
-	m.dasmPtr = m.dasm.PC
+	m.dasmPtr = m.dasm.PC + 1
 	return nil
 }
 

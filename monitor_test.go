@@ -17,6 +17,85 @@ func newTestMonitor() (*Monitor, *bytes.Buffer) {
 	return mon, &out
 }
 
+func TestDisassembleFirstLine(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.mach.mem.StoreN(0x0800,
+		0xa9, 0x12, // lda #$12
+		0x00, // brk
+	)
+	mon.in = strings.NewReader("d")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "$0800: a9 12     lda #$12"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestDisassembleLastLine(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.mach.mem.StoreN(0x0800+uint16(dasmPageLen-1),
+		0xa9, 0x34, // lda #$34
+	)
+	mon.in = strings.NewReader("d")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$083e: a9 34     lda #$34"
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestDisassemblePage(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("d 0800")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$083f: 00        brk"
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestDisassembleNextPage(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("d 0800 \n d \n d")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$08bf: 00        brk"
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestDisassembleRange(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("d 0800 0812")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$0812: 00        brk"
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestDisassembleTooManyArguments(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("d 0800 0812 0812")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "too many arguments"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
 func TestGo(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.mach.mem.StoreN(0x0800,
@@ -129,37 +208,6 @@ func TestGoTooManyArguments(t *testing.T) {
 	lines := strings.Split(out.String(), "\n")
 	want := "too many arguments"
 	have := lines[0]
-	if want != have {
-		t.Errorf("\n want: %v \n have: %v \n", want, have)
-	}
-}
-
-func TestDisassembleFirstLine(t *testing.T) {
-	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800,
-		0xa9, 0x12, // lda #$12
-		0x00, // brk
-	)
-	mon.in = strings.NewReader("d")
-	mon.Run()
-	lines := strings.Split(out.String(), "\n")
-	want := "$0800: a9 12     lda #$12"
-	have := lines[0]
-	if want != have {
-		t.Errorf("\n want: %v \n have: %v \n", want, have)
-	}
-}
-
-func TestDisassembleLastLine(t *testing.T) {
-	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800+uint16(dasmPageLen-2),
-		0xa9, 0x34, // lda #$34
-	)
-	mon.in = strings.NewReader("d")
-	mon.Run()
-	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
-	want := "$083e: a9 34     lda #$34"
-	have := lines[len(lines)-1]
 	if want != have {
 		t.Errorf("\n want: %v \n have: %v \n", want, have)
 	}

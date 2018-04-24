@@ -6,7 +6,6 @@ import (
 )
 
 func TestDisassembler(t *testing.T) {
-
 	var b = func(values ...int) []uint8 {
 		bytes := make([]uint8, 0)
 		for _, v := range values {
