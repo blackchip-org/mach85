@@ -327,3 +327,15 @@ func TestTraceDisabled(t *testing.T) {
 		t.Errorf("\n want: %v \n have: %v \n", want, have)
 	}
 }
+
+func TestTraceTooManyArguments(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("t on on")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "too many arguments"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
