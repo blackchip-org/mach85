@@ -1,7 +1,6 @@
 package mach85
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 )
@@ -33,7 +32,7 @@ func (m *Mach85) LoadROM() error {
 	for _, rom := range roms {
 		data, err := ioutil.ReadFile(rom.file)
 		if err != nil {
-			return fmt.Errorf("unable to load %v: %v", rom.file, err)
+			return err
 		}
 		m.mem.Import(rom.address, data)
 		log.Printf("$%04x: %v\n", rom.address, rom.file)
