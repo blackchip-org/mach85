@@ -3,6 +3,7 @@ package mach85
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 )
 
 type Mach85 struct {
@@ -10,10 +11,13 @@ type Mach85 struct {
 	cpu *CPU
 }
 
-const (
-	addrBasic  = 0xa000
-	addrKernal = 0xe000
-)
+var roms = []struct {
+	file    string
+	address uint16
+}{
+	{"basic.rom", 0xa000},
+	{"kernal.rom", 0xe000},
+}
 
 func New() *Mach85 {
 	mem := NewMemory64k()
@@ -22,21 +26,19 @@ func New() *Mach85 {
 		mem: mem,
 		cpu: cpu,
 	}
-	cpu.PC = mem.Load16(ResetVector) - 1
 	return m
 }
 
 func (m *Mach85) LoadROM() error {
-	basic, err := ioutil.ReadFile("./basic.rom")
-	if err != nil {
-		return fmt.Errorf("unable to load basic.rom: %v", err)
+	for _, rom := range roms {
+		data, err := ioutil.ReadFile(rom.file)
+		if err != nil {
+			return fmt.Errorf("unable to load %v: %v", rom.file, err)
+		}
+		m.mem.Import(rom.address, data)
+		log.Printf("$%04x: %v\n", rom.address, rom.file)
 	}
-	m.mem.Import(addrBasic, basic)
-	kernal, err := ioutil.ReadFile("./kernal.rom")
-	if err != nil {
-		return fmt.Errorf("unable to load kernal.rom: %v", err)
-	}
-	m.mem.Import(addrKernal, kernal)
+	m.cpu.PC = m.mem.Load16(ResetVector) - 1
 	return nil
 }
 

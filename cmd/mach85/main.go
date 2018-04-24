@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(0)
 	mach := mach85.New()
 	if err := mach.LoadROM(); err != nil {
 		log.Fatal(err)
