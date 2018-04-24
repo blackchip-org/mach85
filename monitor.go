@@ -8,22 +8,40 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 )
 
+const (
+	CmdDisassemble = "d"
+	CmdGo          = "g"
+	CmdMemory      = "m"
+	CmdPoke        = "p"
+	CmdQuit        = "q"
+	CmdReset       = "reset"
+	CmdRegisters   = "r"
+	CmdTrace       = "t"
+)
+
+var (
+	memPageLen  = 0x100
+	dasmPageLen = 0x40
+)
+
 type Monitor struct {
-	PageLen     int
 	mach        *Mach85
 	in          io.Reader
 	out         *log.Logger
 	dasm        *Disassembler
 	interactive bool
 	quit        bool
+	lastCmd     string
+	memPtr      uint16
+	dasmPtr     uint16
 }
 
 func NewMonitor(mach *Mach85) *Monitor {
 	mon := &Monitor{
-		PageLen:     0x10,
 		mach:        mach,
 		in:          os.Stdin,
 		out:         log.New(os.Stdout, "", 0),
@@ -32,6 +50,8 @@ func NewMonitor(mach *Mach85) *Monitor {
 	}
 	return mon
 }
+
+const maxArgs = 0x100
 
 func (m *Monitor) Run() {
 	s := bufio.NewScanner(m.in)
@@ -63,34 +83,113 @@ func (m *Monitor) parse(line string) {
 	args := fields[1:]
 	var err error
 	switch {
-	case strings.HasPrefix(cmd, "d"):
+	case strings.HasPrefix(cmd, CmdDisassemble):
 		err = m.disassemble(args)
-	case strings.HasPrefix(cmd, "g"):
+	case strings.HasPrefix(cmd, CmdGo):
 		err = m.goCmd(args)
-	case strings.HasPrefix(cmd, "q"):
+	case strings.HasPrefix(cmd, CmdMemory):
+		err = m.memory(args)
+	case strings.HasPrefix(cmd, CmdPoke):
+		err = m.poke(args)
+	case strings.HasPrefix(cmd, CmdQuit):
 		m.quit = true
 		return
-	case cmd == "reset":
+	case cmd == CmdReset:
 		err = m.reset(args)
-	case strings.HasPrefix(cmd, "r"):
+	case strings.HasPrefix(cmd, CmdRegisters):
 		err = m.registers(args)
-	case strings.HasPrefix(cmd, "t"):
+	case strings.HasPrefix(cmd, CmdTrace):
 		err = m.trace(args)
 	default:
 		err = fmt.Errorf("unknown command: %v", cmd)
 	}
 	if err != nil {
 		m.out.Println(err)
+	} else {
+		m.lastCmd = cmd
 	}
 }
 
 func (m *Monitor) disassemble(args []string) error {
-	if err := checkLen(args, 0, 0); err != nil {
+	if err := checkLen(args, 0, 2); err != nil {
 		return err
 	}
-	m.dasm.PC = m.mach.cpu.PC
-	for i := 0; i < m.PageLen; i++ {
+	addrStart := m.mach.cpu.PC
+	if len(args) == 0 {
+		if strings.HasPrefix(m.lastCmd, CmdDisassemble) {
+			addrStart = m.dasmPtr
+		}
+	}
+	if len(args) > 0 {
+		addr, err := parseAddress(args[0])
+		if err != nil {
+			return err
+		}
+		addrStart = addr
+	}
+	addrEnd := addrStart + uint16(dasmPageLen)
+	if len(args) > 1 {
+		addr, err := parseAddress(args[1])
+		if err != nil {
+			return err
+		}
+		addrEnd = addr
+	}
+	for m.dasm.PC = addrStart; m.dasm.PC < addrEnd; {
 		m.out.Println(m.dasm.Next().String())
+	}
+	m.dasmPtr = m.dasm.PC
+	return nil
+}
+
+func (m *Monitor) memory(args []string) error {
+	if err := checkLen(args, 0, 2); err != nil {
+		return err
+	}
+	addrStart := m.mach.cpu.PC + 1
+	if len(args) == 0 {
+		if strings.HasPrefix(m.lastCmd, CmdMemory) {
+			addrStart = m.memPtr
+		}
+	}
+	if len(args) > 0 {
+		addr, err := parseAddress(args[0])
+		if err != nil {
+			return err
+		}
+		addrStart = addr
+	}
+	addrEnd := addrStart + uint16(memPageLen)
+	if len(args) > 1 {
+		addr, err := parseAddress(args[1])
+		if err != nil {
+			return err
+		}
+		addrEnd = addr
+	}
+	m.out.Println(m.mach.mem.Dump(addrStart, addrEnd))
+	m.memPtr = addrEnd
+	return nil
+}
+
+func (m *Monitor) poke(args []string) error {
+	if err := checkLen(args, 2, maxArgs); err != nil {
+		return err
+	}
+	address, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+	values := []uint8{}
+	for _, str := range args[1:] {
+		v, err := parseValue(str)
+		if err != nil {
+			return err
+		}
+		values = append(values, v)
+	}
+	for offset, v := range values {
+		m.mach.mem.Store(address+uint16(offset), v)
 	}
 	return nil
 }
@@ -122,17 +221,26 @@ func (m *Monitor) goCmd(args []string) error {
 }
 
 func (m *Monitor) trace(args []string) error {
-	if err := checkLen(args, 0, 0); err != nil {
+	if err := checkLen(args, 0, 1); err != nil {
 		return err
 	}
-	if m.mach.cpu.Trace == nil {
+	if len(args) == 0 {
+		if m.mach.cpu.Trace == nil {
+			m.out.Println("trace off")
+		} else {
+			m.out.Println("trace on")
+		}
+		return nil
+	}
+	switch args[0] {
+	case "on":
 		m.mach.cpu.Trace = func(op Operation) {
 			m.out.Println(op)
 		}
-		m.out.Println("tracing enabled")
-	} else {
+	case "off":
 		m.mach.cpu.Trace = nil
-		m.out.Println("tracing disabled")
+	default:
+		return fmt.Errorf("invalid: %v", args[0])
 	}
 	return nil
 }
@@ -153,4 +261,34 @@ func checkLen(args []string, min int, max int) error {
 		return errors.New("too many arguments")
 	}
 	return nil
+}
+
+func parseUint(str string, bitSize int) (uint64, error) {
+	base := 16
+	switch {
+	case strings.HasPrefix(str, "$"):
+		str = str[1:]
+	case strings.HasPrefix(str, "0x"):
+		str = str[2:]
+	case strings.HasPrefix(str, "+"):
+		str = str[1:]
+		base = 10
+	}
+	return strconv.ParseUint(str, base, bitSize)
+}
+
+func parseAddress(str string) (uint16, error) {
+	value, err := parseUint(str, 16)
+	if err != nil {
+		return 0, fmt.Errorf("invalid address: %v", str)
+	}
+	return uint16(value), nil
+}
+
+func parseValue(str string) (uint8, error) {
+	value, err := parseUint(str, 8)
+	if err != nil {
+		return 0, fmt.Errorf("invalid value: %v", str)
+	}
+	return uint8(value), nil
 }

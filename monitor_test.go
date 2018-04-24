@@ -68,13 +68,13 @@ func TestDisassembleFirstLine(t *testing.T) {
 
 func TestDisassembleLastLine(t *testing.T) {
 	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800+uint16(mon.PageLen-1),
+	mon.mach.mem.StoreN(0x0800+uint16(dasmPageLen-2),
 		0xa9, 0x34, // lda #$34
 	)
 	mon.in = strings.NewReader("d")
 	mon.Run()
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
-	want := "$080f: a9 34     lda #$34"
+	want := "$083e: a9 34     lda #$34"
 	have := lines[len(lines)-1]
 	if want != have {
 		t.Errorf("\n want: %v \n have: %v \n", want, have)
@@ -86,11 +86,11 @@ func TestTrace(t *testing.T) {
 	mon.mach.mem.StoreN(0x0800,
 		0xa9, 0x34, // lda #$34
 	)
-	mon.in = strings.NewReader("t \n g")
+	mon.in = strings.NewReader("t on \n t \n g")
 	mon.Run()
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := []string{
-		"tracing enabled",
+		"trace on",
 		"$0800: a9 34     lda #$34",
 		"$0802: 00        brk",
 	}
@@ -105,12 +105,11 @@ func TestTraceDisabled(t *testing.T) {
 	mon.mach.mem.StoreN(0x0800,
 		0xa9, 0x34, // lda #$34
 	)
-	mon.in = strings.NewReader("t \n t \n g")
+	mon.in = strings.NewReader("t on \n t off \n t \n g")
 	mon.Run()
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := []string{
-		"tracing enabled",
-		"tracing disabled",
+		"trace off",
 	}
 	have := lines
 	if !reflect.DeepEqual(want, have) {
