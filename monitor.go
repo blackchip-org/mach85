@@ -30,6 +30,8 @@ var (
 
 type Monitor struct {
 	mach        *Mach85
+	cpu         *CPU
+	mem         *Memory
 	in          io.Reader
 	out         *log.Logger
 	dasm        *Disassembler
@@ -43,6 +45,8 @@ type Monitor struct {
 func NewMonitor(mach *Mach85) *Monitor {
 	mon := &Monitor{
 		mach:        mach,
+		cpu:         mach.cpu,
+		mem:         mach.mem,
 		in:          os.Stdin,
 		out:         log.New(os.Stdout, "", 0),
 		dasm:        NewDisassembler(mach.mem),
@@ -114,7 +118,7 @@ func (m *Monitor) disassemble(args []string) error {
 	if err := checkLen(args, 0, 2); err != nil {
 		return err
 	}
-	addrStart := m.mach.cpu.PC
+	addrStart := m.cpu.PC
 	if len(args) == 0 {
 		if strings.HasPrefix(m.lastCmd, CmdDisassemble) {
 			addrStart = m.dasmPtr
@@ -146,7 +150,7 @@ func (m *Monitor) memory(args []string) error {
 	if err := checkLen(args, 0, 2); err != nil {
 		return err
 	}
-	addrStart := m.mach.cpu.PC + 1
+	addrStart := m.cpu.PC + 1
 	if len(args) == 0 {
 		if strings.HasPrefix(m.lastCmd, CmdMemory) {
 			addrStart = m.memPtr
@@ -167,7 +171,7 @@ func (m *Monitor) memory(args []string) error {
 		}
 		addrEnd = addr
 	}
-	m.out.Println(m.mach.mem.Dump(addrStart, addrEnd))
+	m.out.Println(m.mem.Dump(addrStart, addrEnd))
 	m.memPtr = addrEnd
 	return nil
 }
@@ -189,7 +193,7 @@ func (m *Monitor) poke(args []string) error {
 		values = append(values, v)
 	}
 	for offset, v := range values {
-		m.mach.mem.Store(address+uint16(offset), v)
+		m.mem.Store(address+uint16(offset), v)
 	}
 	return nil
 }
@@ -198,7 +202,7 @@ func (m *Monitor) registers(args []string) error {
 	if err := checkLen(args, 0, 0); err != nil {
 		return err
 	}
-	m.out.Println(m.mach.cpu.String())
+	m.out.Println(m.cpu.String())
 	return nil
 }
 
@@ -212,8 +216,15 @@ func (m *Monitor) reset(args []string) error {
 }
 
 func (m *Monitor) goCmd(args []string) error {
-	if err := checkLen(args, 0, 0); err != nil {
+	if err := checkLen(args, 0, 1); err != nil {
 		return err
+	}
+	if len(args) > 0 {
+		address, err := parseAddress(args[0])
+		if err != nil {
+			return err
+		}
+		m.cpu.PC = address - 1
 	}
 	go m.signalHandler()
 	m.mach.Run()
@@ -225,7 +236,7 @@ func (m *Monitor) trace(args []string) error {
 		return err
 	}
 	if len(args) == 0 {
-		if m.mach.cpu.Trace == nil {
+		if m.cpu.Trace == nil {
 			m.out.Println("trace off")
 		} else {
 			m.out.Println("trace on")
@@ -234,11 +245,11 @@ func (m *Monitor) trace(args []string) error {
 	}
 	switch args[0] {
 	case "on":
-		m.mach.cpu.Trace = func(op Operation) {
+		m.cpu.Trace = func(op Operation) {
 			m.out.Println(op)
 		}
 	case "off":
-		m.mach.cpu.Trace = nil
+		m.cpu.Trace = nil
 	default:
 		return fmt.Errorf("invalid: %v", args[0])
 	}
