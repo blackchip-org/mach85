@@ -11,29 +11,39 @@ type Operation struct {
 	Mode        Mode
 	Operand     uint16
 	Bytes       []uint8
+	Comment     string
+}
+
+type Comment struct {
+	Address uint16 `json:"address"`
+	Text    string `json:"text"`
 }
 
 type Disassembler struct {
-	PC  uint16
-	mem *Memory
+	PC       uint16
+	mem      *Memory
+	comments map[uint16]string
 }
 
 func NewDisassembler(mem *Memory) *Disassembler {
 	return &Disassembler{
-		PC:  0xffff,
-		mem: mem,
+		PC:       0xffff,
+		mem:      mem,
+		comments: map[uint16]string{},
 	}
 }
 
 func (d *Disassembler) Next() Operation {
 	d.PC++
 	opcode := d.mem.Load(d.PC)
+	address := d.PC
 	result := Operation{
-		Address:     d.PC,
+		Address:     address,
 		Instruction: Illegal,
 		Mode:        Implied,
 		Operand:     uint16(opcode),
 		Bytes:       []uint8{opcode},
+		Comment:     d.comments[address],
 	}
 	op, ok := opcodes[opcode]
 	if !ok {
@@ -93,5 +103,20 @@ func (o Operation) String() string {
 			operand = " " + format
 		}
 	}
-	return fmt.Sprintf("$%04x: %v %v %v  %v%v", o.Address, b0, b1, b2, o.Instruction, operand)
+	line := fmt.Sprintf("$%04x: %v %v %v  %v%v", o.Address, b0, b1, b2, o.Instruction, operand)
+	if o.Comment != "" {
+		comments := strings.Split(o.Comment, "\n")
+		spaces := 30 - len(line)
+		line = line + strings.Repeat(" ", spaces) + comments[0]
+		for _, c := range comments[1:] {
+			line += "\n" + strings.Repeat(" ", 30) + c
+		}
+	}
+	return line
+}
+
+func (d *Disassembler) LoadComments(comments []Comment) {
+	for _, c := range comments {
+		d.comments[c.Address] = c.Text
+	}
 }

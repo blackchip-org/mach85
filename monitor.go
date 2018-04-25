@@ -74,6 +74,11 @@ func (m *Monitor) Run() {
 	}
 }
 
+func (m *Monitor) LoadComments(comments []Comment) {
+	m.dasm.LoadComments(comments)
+	m.cpu.dasm.LoadComments(comments)
+}
+
 func (m *Monitor) parse(line string) {
 	line = strings.ToLower(line)
 	line = strings.TrimSpace(line)
