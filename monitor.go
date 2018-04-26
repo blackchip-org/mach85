@@ -83,6 +83,9 @@ func (m *Monitor) LoadComments(comments []Comment) {
 func (m *Monitor) parse(line string) {
 	line = strings.ToLower(line)
 	line = strings.TrimSpace(line)
+	if line == "" {
+		return
+	}
 	fields := strings.Split(line, " ")
 
 	if len(fields) == 0 {
