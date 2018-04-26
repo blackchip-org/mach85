@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	CmdBreakpoint  = "b"
 	CmdDisassemble = "d"
 	CmdGo          = "g"
 	CmdMemory      = "m"
@@ -92,6 +93,8 @@ func (m *Monitor) parse(line string) {
 	args := fields[1:]
 	var err error
 	switch {
+	case strings.HasPrefix(cmd, CmdBreakpoint):
+		err = m.breakpoint(args)
 	case strings.HasPrefix(cmd, CmdDisassemble):
 		err = m.disassemble(args)
 	case strings.HasPrefix(cmd, CmdGo):
@@ -117,6 +120,33 @@ func (m *Monitor) parse(line string) {
 	} else {
 		m.lastCmd = cmd
 	}
+}
+
+func (m *Monitor) breakpoint(args []string) error {
+	if err := checkLen(args, 1, 2); err != nil {
+		return err
+	}
+	address, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+	if len(args) == 1 {
+		if !m.cpu.Breakpoints[address] {
+			m.out.Println("breakpoint off")
+		} else {
+			m.out.Println("breakpoint on")
+		}
+		return nil
+	}
+	switch args[1] {
+	case "on":
+		m.cpu.Breakpoints[address] = true
+	case "off":
+		delete(m.cpu.Breakpoints, address)
+	default:
+		return fmt.Errorf("invalid: %v", args[1])
+	}
+	return nil
 }
 
 func (m *Monitor) disassemble(args []string) error {

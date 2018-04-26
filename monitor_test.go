@@ -17,6 +17,54 @@ func newTestMonitor() (*Monitor, *bytes.Buffer) {
 	return mon, &out
 }
 
+func TestBreakpointOn(t *testing.T) {
+	mon, _ := newTestMonitor()
+	mon.mach.mem.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
+	mon.in = strings.NewReader("b 0x0802 on \n g")
+	mon.Run()
+	want := uint16(0x0801)
+	have := mon.cpu.PC
+	if want != have {
+		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
+	}
+}
+
+func TestBreakpointOff(t *testing.T) {
+	mon, _ := newTestMonitor()
+	mon.mach.mem.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
+	mon.in = strings.NewReader("b 0x0802 on \n b 0x0802 off \n g")
+	mon.Run()
+	want := uint16(0x0804)
+	have := mon.cpu.PC
+	if want != have {
+		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
+	}
+}
+
+func TestBreakpointNotEnoughArguments(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("b")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "not enough arguments"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestBreakpointTooManyArguments(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.in = strings.NewReader("b 0x0800 on on")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "too many arguments"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
 func TestDisassembleFirstLine(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.mach.mem.StoreN(0x0800,
