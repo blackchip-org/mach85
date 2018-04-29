@@ -14,22 +14,25 @@ type Operation struct {
 	Comment     string
 }
 
-type Comment struct {
-	Address uint16 `json:"address"`
-	Text    string `json:"text"`
+type Source struct {
+	Comments map[uint16]string `json:"comments"`
+}
+
+func NewSource() *Source {
+	return &Source{Comments: make(map[uint16]string)}
 }
 
 type Disassembler struct {
-	PC       uint16
-	mem      *Memory
-	comments map[uint16]string
+	PC     uint16
+	mem    *Memory
+	source *Source
 }
 
 func NewDisassembler(mem *Memory) *Disassembler {
 	return &Disassembler{
-		PC:       0xffff,
-		mem:      mem,
-		comments: map[uint16]string{},
+		PC:     0xffff,
+		mem:    mem,
+		source: NewSource(),
 	}
 }
 
@@ -43,7 +46,7 @@ func (d *Disassembler) Next() Operation {
 		Mode:        Implied,
 		Operand:     uint16(opcode),
 		Bytes:       []uint8{opcode},
-		Comment:     d.comments[address],
+		Comment:     d.source.Comments[address],
 	}
 	op, ok := opcodes[opcode]
 	if !ok {
@@ -115,8 +118,8 @@ func (o Operation) String() string {
 	return line
 }
 
-func (d *Disassembler) LoadComments(comments []Comment) {
-	for _, c := range comments {
-		d.comments[c.Address] = c.Text
+func (d *Disassembler) LoadSource(source *Source) {
+	for address, text := range source.Comments {
+		d.source.Comments[address] = text
 	}
 }

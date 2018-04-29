@@ -30,28 +30,28 @@ var (
 )
 
 type Monitor struct {
-	mach        *Mach85
-	cpu         *CPU
-	mem         *Memory
-	in          io.Reader
-	out         *log.Logger
-	dasm        *Disassembler
-	interactive bool
-	quit        bool
-	lastCmd     string
-	memPtr      uint16
-	dasmPtr     uint16
+	Disassembler *Disassembler
+	mach         *Mach85
+	cpu          *CPU
+	mem          *Memory
+	in           io.Reader
+	out          *log.Logger
+	interactive  bool
+	quit         bool
+	lastCmd      string
+	memPtr       uint16
+	dasmPtr      uint16
 }
 
 func NewMonitor(mach *Mach85) *Monitor {
 	mon := &Monitor{
-		mach:        mach,
-		cpu:         mach.cpu,
-		mem:         mach.mem,
-		in:          os.Stdin,
-		out:         log.New(os.Stdout, "", 0),
-		dasm:        NewDisassembler(mach.mem),
-		interactive: true,
+		mach:         mach,
+		cpu:          mach.cpu,
+		mem:          mach.mem,
+		in:           os.Stdin,
+		out:          log.New(os.Stdout, "", 0),
+		Disassembler: NewDisassembler(mach.mem),
+		interactive:  true,
 	}
 	return mon
 }
@@ -73,11 +73,6 @@ func (m *Monitor) Run() {
 			return
 		}
 	}
-}
-
-func (m *Monitor) LoadComments(comments []Comment) {
-	m.dasm.LoadComments(comments)
-	m.cpu.dasm.LoadComments(comments)
 }
 
 func (m *Monitor) parse(line string) {
@@ -177,10 +172,10 @@ func (m *Monitor) disassemble(args []string) error {
 		}
 		addrEnd = addr
 	}
-	for m.dasm.PC = addrStart; m.dasm.PC < addrEnd; {
-		m.out.Println(m.dasm.Next().String())
+	for m.Disassembler.PC = addrStart; m.Disassembler.PC < addrEnd; {
+		m.out.Println(m.Disassembler.Next().String())
 	}
-	m.dasmPtr = m.dasm.PC + 1
+	m.dasmPtr = m.Disassembler.PC + 1
 	return nil
 }
 

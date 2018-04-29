@@ -1,3 +1,5 @@
+// +build ignore
+
 package main
 
 import (
@@ -11,6 +13,11 @@ import (
 	"github.com/blackchip-org/mach85"
 )
 
+type comment struct {
+	address uint16
+	text    string
+}
+
 func main() {
 	log.SetFlags(0)
 	in, err := os.Open("c64rom_en.txt")
@@ -21,7 +28,7 @@ func main() {
 	s := bufio.NewScanner(in)
 	s.Split(bufio.ScanLines)
 
-	comments := []mach85.Comment{}
+	comments := []comment{}
 	commentCanContinue := false
 	for s.Scan() {
 		line := s.Text()
@@ -31,7 +38,8 @@ func main() {
 		}
 		if line[0] == ' ' && commentCanContinue {
 			comment := strings.TrimSpace(line[32:])
-			comments[len(comments)-1].Text += "\n" + comment
+
+			comments[len(comments)-1].text += "\n" + comment
 			continue
 		}
 		if !strings.HasPrefix(line, ".,") {
@@ -43,19 +51,23 @@ func main() {
 			log.Printf("unable to parse address: %v", address)
 			continue
 		}
-		comment := mach85.Comment{
-			Address: uint16(address),
-			Text:    strings.TrimSpace(line[32:]),
+		comment := comment{
+			address: uint16(address),
+			text:    strings.TrimSpace(line[32:]),
 		}
 		comments = append(comments, comment)
 		commentCanContinue = true
 	}
 
-	out, err := os.Create("../mach85/c64rom.debug")
+	source := mach85.NewSource()
+	for _, c := range comments {
+		source.Comments[c.address] = c.text
+	}
+	out, err := os.Create("../../cmd/mach85/c64rom_en.source")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer out.Close()
 	encoder := json.NewEncoder(out)
-	encoder.Encode(comments)
+	encoder.Encode(source)
 }

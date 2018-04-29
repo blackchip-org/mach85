@@ -20,14 +20,14 @@ func main() {
 	log.Println()
 	mon := mach85.NewMonitor(mach)
 
-	in, err := os.Open("c64rom.debug")
+	in, err := os.Open("c64rom_en.source")
 	if err != nil {
 		log.Fatal(err)
 	}
 	decoder := json.NewDecoder(in)
-	comments := []mach85.Comment{}
-	decoder.Decode(&comments)
-	mon.LoadComments(comments)
+	source := &mach85.Source{}
+	decoder.Decode(source)
+	mon.Disassembler.LoadSource(source)
 
 	mon.Run()
 }
