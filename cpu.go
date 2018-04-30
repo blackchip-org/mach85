@@ -2,6 +2,12 @@ package mach85
 
 import (
 	"fmt"
+	"log"
+)
+
+const (
+	Stack       = uint16(0x0100)
+	ResetVector = uint16(0xfffc)
 )
 
 // CPU is the MOS Technology 6502 processor.
@@ -20,12 +26,20 @@ type CPU struct {
 	V bool // Overflow flag
 	N bool // Signed flag
 
-	mem *Memory
+	Trace       func(op Operation)
+	Breakpoints map[uint16]bool
+
+	mem  *Memory
+	dasm *Disassembler
+	stop chan bool
 }
 
 func NewCPU(mem *Memory) *CPU {
 	return &CPU{
-		mem: mem,
+		Breakpoints: make(map[uint16]bool),
+		mem:         mem,
+		dasm:        NewDisassembler(mem),
+		stop:        make(chan bool),
 	}
 }
 
@@ -81,18 +95,63 @@ func (c *CPU) fetch16() uint16 {
 	return uint16(c.fetch()) + (uint16(c.fetch()))<<8
 }
 
+func (c *CPU) push(value uint8) {
+	c.mem.Store(Stack+uint16(c.SP), value)
+	c.SP--
+}
+
+func (c *CPU) push16(value uint16) {
+	c.push(uint8(value >> 8))
+	c.push(uint8(value & 0xff))
+}
+
+func (c *CPU) pull() uint8 {
+	c.SP++
+	return c.mem.Load(Stack + uint16(c.SP))
+}
+
+func (c *CPU) pull16() uint16 {
+	return uint16(c.pull()) | uint16(c.pull())<<8
+}
+
+func (c *CPU) Reset() {
+	// Vector is actual start address so set the PC one byte behind
+	c.PC = c.mem.Load16(ResetVector) - 1
+}
+
 func (c *CPU) Next() {
+	if c.Trace != nil {
+		c.dasm.PC = c.PC
+		c.Trace(c.dasm.Next())
+	}
 	opcode := c.fetch()
-	exec, ok := opcodes[opcode]
-	if ok {
-		exec(c)
+	execute, ok := executors[opcode]
+	if !ok {
+		log.Printf("$%04x: illegal opcode: $%02x", c.PC, opcode)
+	} else {
+		execute(c)
 	}
 }
 
 func (c *CPU) Run() {
-	for !c.B {
-		c.Next()
+	for {
+		if _, ok := c.Breakpoints[c.PC+1]; ok {
+			return
+		}
+		if c.B {
+			return
+		}
+		select {
+		case <-c.stop:
+			return
+		default:
+			c.Next()
+		}
 	}
+}
+
+func (c *CPU) Stop() {
+	c.stop <- true
 }
 
 func (c *CPU) setFlagsNZ(value uint8) {

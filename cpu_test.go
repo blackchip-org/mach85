@@ -1,8 +1,34 @@
 package mach85
 
 import (
+	"bytes"
+	"log"
+	"os"
+	"strings"
 	"testing"
 )
+
+func newTestCPU() *CPU {
+	mem := NewMemory64k()
+	c := NewCPU(mem)
+	c.SP = 0xff
+	c.PC = 0x1ff
+	return c
+}
+
+func TestIllegalOpcode(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() { log.SetOutput(os.Stderr) }()
+
+	c := newTestCPU()
+	// http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
+	c.mem.Store(0x0200, 0x02) // *KIL
+	c.Run()
+	if !strings.Contains(buf.String(), "illegal") {
+		t.Errorf("illegal instruction not logged")
+	}
+}
 
 var cpuStringTests = []struct {
 	setup func(c *CPU)
@@ -60,11 +86,71 @@ var cpuStringTests = []struct {
 
 func TestCPUString(t *testing.T) {
 	for _, test := range cpuStringTests {
-		c := NewCPU(NewMemory(0))
+		c := NewCPU(NewMemory64k())
 		test.setup(c)
 		have := c.String()
 		if test.want != have {
 			t.Errorf("\n want: \n%v \n have: \n%v\n", test.want, have)
 		}
+	}
+}
+func TestPush(t *testing.T) {
+	c := NewCPU(NewMemory64k())
+	c.SP = 0xff
+	c.push(0x12)
+	c.push(0x34)
+	c.push(0x56)
+	want := uint8(0x56)
+	have := c.mem.Load(Stack + 0x100 - 3)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
+
+func TestPush16(t *testing.T) {
+	c := NewCPU(NewMemory64k())
+	c.SP = 0xff
+	c.push(0x12)
+	c.push16(0x3456)
+	want := uint8(0x56)
+	have := c.mem.Load(Stack + 0x100 - 3)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
+
+func TestPushOverflow(t *testing.T) {
+	c := NewCPU(NewMemory64k())
+	c.SP = 0x01
+	c.push(0x12)
+	c.push(0x34)
+	c.push(0x56)
+	want := uint8(0x56)
+	have := c.mem.Load(Stack + 0x100 - 1)
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
+
+func TestPull(t *testing.T) {
+	c := NewCPU(NewMemory64k())
+	c.mem.Store(Stack+0xff, 0x12)
+	c.SP = 0xfe
+	want := uint8(0x12)
+	have := c.pull()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
+
+func TestPull16(t *testing.T) {
+	c := NewCPU(NewMemory64k())
+	c.mem.Store(Stack+0xfe, 0x34)
+	c.mem.Store(Stack+0xff, 0x12)
+	c.SP = 0xfd
+	want := uint16(0x1234)
+	have := c.pull16()
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
 	}
 }
