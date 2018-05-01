@@ -10,18 +10,22 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+
+	"github.com/blackchip-org/mach85/encoding"
+	"github.com/blackchip-org/mach85/encoding/petscii"
 )
 
 const (
-	CmdBreakpoint  = "b"
-	CmdDisassemble = "d"
-	CmdGo          = "g"
-	CmdMemory      = "m"
-	CmdPoke        = "p"
-	CmdQuit        = "q"
-	CmdReset       = "reset"
-	CmdRegisters   = "r"
-	CmdTrace       = "t"
+	CmdBreakpoint    = "b"
+	CmdDisassemble   = "d"
+	CmdGo            = "g"
+	CmdMemory        = "m"
+	CmdMemoryShifted = "M"
+	CmdPoke          = "p"
+	CmdQuit          = "q"
+	CmdReset         = "reset"
+	CmdRegisters     = "r"
+	CmdTrace         = "t"
 )
 
 var (
@@ -76,7 +80,6 @@ func (m *Monitor) Run() {
 }
 
 func (m *Monitor) parse(line string) {
-	line = strings.ToLower(line)
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return
@@ -90,25 +93,27 @@ func (m *Monitor) parse(line string) {
 	cmd := fields[0]
 	args := fields[1:]
 	var err error
-	switch {
-	case strings.HasPrefix(cmd, CmdBreakpoint):
+	switch cmd {
+	case CmdBreakpoint:
 		err = m.breakpoint(args)
-	case strings.HasPrefix(cmd, CmdDisassemble):
+	case CmdDisassemble:
 		err = m.disassemble(args)
-	case strings.HasPrefix(cmd, CmdGo):
+	case CmdGo:
 		err = m.goCmd(args)
-	case strings.HasPrefix(cmd, CmdMemory):
-		err = m.memory(args)
-	case strings.HasPrefix(cmd, CmdPoke):
+	case CmdMemory:
+		err = m.memory(args, petscii.UnshiftedDecoder)
+	case CmdMemoryShifted:
+		err = m.memory(args, petscii.ShiftedDecoder)
+	case CmdPoke:
 		err = m.poke(args)
-	case strings.HasPrefix(cmd, CmdQuit):
+	case CmdQuit:
 		m.quit = true
 		return
-	case cmd == CmdReset:
+	case CmdReset:
 		err = m.reset(args)
-	case strings.HasPrefix(cmd, CmdRegisters):
+	case CmdRegisters:
 		err = m.registers(args)
-	case strings.HasPrefix(cmd, CmdTrace):
+	case CmdTrace:
 		err = m.trace(args)
 	default:
 		err = fmt.Errorf("unknown command: %v", cmd)
@@ -179,13 +184,13 @@ func (m *Monitor) disassemble(args []string) error {
 	return nil
 }
 
-func (m *Monitor) memory(args []string) error {
+func (m *Monitor) memory(args []string, decoder encoding.Decoder) error {
 	if err := checkLen(args, 0, 2); err != nil {
 		return err
 	}
 	addrStart := m.cpu.PC + 1
 	if len(args) == 0 {
-		if strings.HasPrefix(m.lastCmd, CmdMemory) {
+		if m.lastCmd == CmdMemory || m.lastCmd == CmdMemoryShifted {
 			addrStart = m.memPtr
 		}
 	}
@@ -204,7 +209,7 @@ func (m *Monitor) memory(args []string) error {
 		}
 		addrEnd = addr
 	}
-	m.out.Println(m.mem.Dump(addrStart, addrEnd))
+	m.out.Println(m.mem.Dump(addrStart, addrEnd, decoder))
 	m.memPtr = addrEnd
 	return nil
 }

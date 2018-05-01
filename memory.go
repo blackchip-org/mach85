@@ -3,6 +3,8 @@ package mach85
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/blackchip-org/mach85/encoding"
 )
 
 type Memory struct {
@@ -45,7 +47,13 @@ func (m *Memory) Store16(address uint16, value uint16) {
 	m.Store(address+1, uint8(value>>8))
 }
 
-func (m *Memory) Dump(start uint16, end uint16) string {
+func (m *Memory) Import(address uint16, data []uint8) {
+	for i, value := range data {
+		m.Store(address+uint16(i), value)
+	}
+}
+
+func (m *Memory) Dump(start uint16, end uint16, decode encoding.Decoder) string {
 	var buf bytes.Buffer
 	var chars bytes.Buffer
 
@@ -65,8 +73,9 @@ func (m *Memory) Dump(start uint16, end uint16) string {
 		} else {
 			value := m.Load(addr)
 			buf.WriteString(fmt.Sprintf(" %02x", value))
-			if value >= 0x20 && value < 0x80 {
-				chars.WriteString(fmt.Sprintf("%c", value))
+			ch, printable := decode(value)
+			if printable {
+				chars.WriteString(fmt.Sprintf("%c", ch))
 			} else {
 				chars.WriteString(".")
 			}
@@ -82,10 +91,4 @@ func (m *Memory) Dump(start uint16, end uint16) string {
 		}
 	}
 	return buf.String()
-}
-
-func (m *Memory) Import(address uint16, data []uint8) {
-	for i, value := range data {
-		m.Store(address+uint16(i), value)
-	}
 }

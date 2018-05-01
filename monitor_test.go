@@ -263,14 +263,10 @@ func TestGoTooManyArguments(t *testing.T) {
 
 func TestMemoryFirstLine(t *testing.T) {
 	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800,
-		0xa9, 0x12, // lda #$12
-		0x00, // brk
-	)
 	mon.in = strings.NewReader("m")
 	mon.Run()
 	lines := strings.Split(out.String(), "\n")
-	want := "$0800 a9 12 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
+	want := "$0800 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
 	have := lines[0]
 	if want != have {
 		t.Errorf("\n want: %v \n have: %v \n", want, have)
@@ -279,9 +275,6 @@ func TestMemoryFirstLine(t *testing.T) {
 
 func TestMemoryLastLine(t *testing.T) {
 	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800+uint16(dasmPageLen-1),
-		0xa9, 0x34, // lda #$34
-	)
 	mon.in = strings.NewReader("m")
 	mon.Run()
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
@@ -322,6 +315,38 @@ func TestMemoryRange(t *testing.T) {
 	mon.Run()
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$0810 00 00 00 00 00 00 00 00  00 00 00                ..........."
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestMemoryUnshifted(t *testing.T) {
+	mon, out := newTestMonitor()
+	for i := 0; i < 0x10; i++ {
+		code := uint8(0x40 + i)
+		mon.mem.Store(uint16(0x0800+i), code)
+	}
+	mon.in = strings.NewReader("m 0800 080f")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$0800 40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f @ABCDEFGHIJKLMNO"
+	have := lines[len(lines)-1]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestMemoryShifted(t *testing.T) {
+	mon, out := newTestMonitor()
+	for i := 0; i < 0x10; i++ {
+		code := uint8(0x40 + i)
+		mon.mem.Store(uint16(0x0800+i), code)
+	}
+	mon.in = strings.NewReader("M 0800 080f")
+	mon.Run()
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	want := "$0800 40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f @abcdefghijklmno"
 	have := lines[len(lines)-1]
 	if want != have {
 		t.Errorf("\n want: %v \n have: %v \n", want, have)

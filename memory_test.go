@@ -3,6 +3,8 @@ package mach85
 import (
 	"strings"
 	"testing"
+
+	"github.com/blackchip-org/mach85/encoding/petscii"
 )
 
 func TestLoad16(t *testing.T) {
@@ -80,7 +82,7 @@ var dumpTests = []struct {
 		},
 		0x10, 0x30, "" +
 			"$0010 40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f @ABCDEFGHIJKLMNO\n" +
-			"$0020 50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f PQRSTUVWXYZ[\\]^_",
+			"$0020 50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f PQRSTUVWXYZ[£]↑←",
 	},
 }
 
@@ -91,7 +93,7 @@ func TestDump(t *testing.T) {
 			for i, value := range test.data() {
 				m.Store(uint16(test.start+i), uint8(value))
 			}
-			have := m.Dump(uint16(test.showFrom), uint16(test.showTo))
+			have := m.Dump(uint16(test.showFrom), uint16(test.showTo), petscii.UnshiftedDecoder)
 			have = strings.TrimSpace(have)
 			if test.want != have {
 				t.Errorf("\n want: \n%v\n have:\n%v", test.want, have)

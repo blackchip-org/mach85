@@ -1,23 +1,15 @@
 package petscii
 
-type UnshiftedDecoder struct{}
+const replacementChar = 0xfffd
 
-func (d UnshiftedDecoder) Decode(index uint8) rune {
-	return unshifted[index]
+var UnshiftedDecoder = func(code uint8) (rune, bool) {
+	ch := unshifted[code]
+	return ch, isPrintable(code) && ch != replacementChar
 }
 
-func (d UnshiftedDecoder) IsPrintable(v uint8) bool {
-	return isPrintable(v)
-}
-
-type ShiftedDecoder struct{}
-
-func (d ShiftedDecoder) Decode(index uint8) rune {
-	return shifted[index]
-}
-
-func (d ShiftedDecoder) IsPrintable(v uint8) bool {
-	return isPrintable(v)
+var ShiftedDecoder = func(code uint8) (rune, bool) {
+	ch := shifted[code]
+	return ch, isPrintable(code) && ch != replacementChar
 }
 
 func isPrintable(v uint8) bool {

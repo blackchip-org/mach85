@@ -1,27 +1,20 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 
 	"github.com/blackchip-org/mach85/encoding"
 	"github.com/blackchip-org/mach85/encoding/petscii"
 )
 
-var shifted bool
-
-func init() {
-	flag.BoolVar(&shifted, "s", false, "show shifted PETSCII")
+func main() {
+	fmt.Printf("unshifted\n")
+	printTable(petscii.UnshiftedDecoder)
+	fmt.Printf("\nshifted\n")
+	printTable(petscii.ShiftedDecoder)
 }
 
-func main() {
-	flag.Parse()
-	var d encoding.Decoder
-	if shifted {
-		d = petscii.ShiftedDecoder{}
-	} else {
-		d = petscii.UnshiftedDecoder{}
-	}
+func printTable(decode encoding.Decoder) {
 	fmt.Print("    ")
 	for x := 0; x < 0x10; x++ {
 		fmt.Printf("%x ", x)
@@ -30,11 +23,12 @@ func main() {
 	for y := 0; y < 0x10; y++ {
 		fmt.Printf("%x   ", y)
 		for x := 0; x < 0x10; x++ {
-			char := uint8(y<<4 + x)
-			if !d.IsPrintable(char) {
+			code := uint8(y<<4 + x)
+			ch, printable := decode(code)
+			if !printable {
 				fmt.Printf("  ")
 			} else {
-				fmt.Printf("%c ", d.Decode(char))
+				fmt.Printf("%c ", ch)
 			}
 		}
 		fmt.Println()
