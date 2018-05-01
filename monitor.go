@@ -22,7 +22,7 @@ const (
 	CmdMemory        = "m"
 	CmdMemoryShifted = "M"
 	CmdPoke          = "p"
-	CmdQuit          = "q"
+	CmdQuit          = "quit"
 	CmdReset         = "reset"
 	CmdRegisters     = "r"
 	CmdTrace         = "t"
@@ -167,7 +167,7 @@ func (m *Monitor) disassemble(args []string) error {
 		if err != nil {
 			return err
 		}
-		addrStart = addr
+		addrStart = addr - 1
 	}
 	addrEnd := addrStart + uint16(dasmPageLen)
 	if len(args) > 1 {
@@ -175,12 +175,12 @@ func (m *Monitor) disassemble(args []string) error {
 		if err != nil {
 			return err
 		}
-		addrEnd = addr
+		addrEnd = addr - 1
 	}
-	for m.Disassembler.PC = addrStart; m.Disassembler.PC < addrEnd; {
+	for m.Disassembler.PC = addrStart; m.Disassembler.PC <= addrEnd; {
 		m.out.Println(m.Disassembler.Next().String())
 	}
-	m.dasmPtr = m.Disassembler.PC + 1
+	m.dasmPtr = m.Disassembler.PC
 	return nil
 }
 
