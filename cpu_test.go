@@ -16,6 +16,12 @@ func newTestCPU() *CPU {
 	return c
 }
 
+func testRunCPU(cpu *CPU) {
+	for !cpu.B {
+		cpu.Next()
+	}
+}
+
 func TestIllegalOpcode(t *testing.T) {
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
@@ -24,7 +30,7 @@ func TestIllegalOpcode(t *testing.T) {
 	c := newTestCPU()
 	// http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
 	c.mem.Store(0x0200, 0x02) // *KIL
-	c.Run()
+	testRunCPU(c)
 	if !strings.Contains(buf.String(), "illegal") {
 		t.Errorf("illegal instruction not logged")
 	}

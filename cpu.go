@@ -26,20 +26,12 @@ type CPU struct {
 	V bool // Overflow flag
 	N bool // Signed flag
 
-	Trace       func(op Operation)
-	Breakpoints map[uint16]bool
-
-	mem  *Memory
-	dasm *Disassembler
-	stop chan bool
+	mem *Memory
 }
 
 func NewCPU(mem *Memory) *CPU {
 	return &CPU{
-		Breakpoints: make(map[uint16]bool),
-		mem:         mem,
-		dasm:        NewDisassembler(mem),
-		stop:        make(chan bool),
+		mem: mem,
 	}
 }
 
@@ -120,10 +112,6 @@ func (c *CPU) Reset() {
 }
 
 func (c *CPU) Next() {
-	if c.Trace != nil {
-		c.dasm.PC = c.PC
-		c.Trace(c.dasm.Next())
-	}
 	opcode := c.fetch()
 	execute, ok := executors[opcode]
 	if !ok {
@@ -131,27 +119,6 @@ func (c *CPU) Next() {
 	} else {
 		execute(c)
 	}
-}
-
-func (c *CPU) Run() {
-	for {
-		if _, ok := c.Breakpoints[c.PC+1]; ok {
-			return
-		}
-		if c.B {
-			return
-		}
-		select {
-		case <-c.stop:
-			return
-		default:
-			c.Next()
-		}
-	}
-}
-
-func (c *CPU) Stop() {
-	c.stop <- true
 }
 
 func (c *CPU) setFlagsNZ(value uint8) {

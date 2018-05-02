@@ -8,8 +8,12 @@ import (
 )
 
 type Mach85 struct {
-	mem *Memory
-	cpu *CPU
+	Trace       func(op Operation)
+	Breakpoints map[uint16]bool
+	mem         *Memory
+	cpu         *CPU
+	dasm        *Disassembler
+	stop        chan bool
 }
 
 var roms = []struct {
@@ -25,8 +29,11 @@ func New() *Mach85 {
 	mem := NewMemory64k()
 	cpu := NewCPU(mem)
 	m := &Mach85{
-		mem: mem,
-		cpu: cpu,
+		mem:         mem,
+		cpu:         cpu,
+		dasm:        NewDisassembler(mem),
+		stop:        make(chan bool),
+		Breakpoints: map[uint16]bool{},
 	}
 	return m
 }
@@ -50,11 +57,28 @@ func (m *Mach85) LoadROM() error {
 
 func (m *Mach85) Run() {
 	m.cpu.B = false
-	m.cpu.Run()
+	for {
+		if _, ok := m.Breakpoints[m.cpu.PC+1]; ok {
+			return
+		}
+		if m.cpu.B {
+			return
+		}
+		select {
+		case <-m.stop:
+			return
+		default:
+			if m.Trace != nil {
+				m.dasm.PC = m.cpu.PC
+				m.Trace(m.dasm.Next())
+			}
+			m.cpu.Next()
+		}
+	}
 }
 
 func (m *Mach85) Stop() {
-	m.cpu.Stop()
+	m.stop <- true
 }
 
 func (m *Mach85) Reset() {

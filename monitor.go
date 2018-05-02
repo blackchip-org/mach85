@@ -134,7 +134,7 @@ func (m *Monitor) breakpoint(args []string) error {
 		return err
 	}
 	if len(args) == 1 {
-		if !m.cpu.Breakpoints[address] {
+		if !m.mach.Breakpoints[address] {
 			m.out.Println("breakpoint off")
 		} else {
 			m.out.Println("breakpoint on")
@@ -143,9 +143,9 @@ func (m *Monitor) breakpoint(args []string) error {
 	}
 	switch args[1] {
 	case "on":
-		m.cpu.Breakpoints[address] = true
+		m.mach.Breakpoints[address] = true
 	case "off":
-		delete(m.cpu.Breakpoints, address)
+		delete(m.mach.Breakpoints, address)
 	default:
 		return fmt.Errorf("invalid: %v", args[1])
 	}
@@ -274,7 +274,7 @@ func (m *Monitor) trace(args []string) error {
 		return err
 	}
 	if len(args) == 0 {
-		if m.cpu.Trace == nil {
+		if m.mach.Trace == nil {
 			m.out.Println("trace off")
 		} else {
 			m.out.Println("trace on")
@@ -283,11 +283,11 @@ func (m *Monitor) trace(args []string) error {
 	}
 	switch args[0] {
 	case "on":
-		m.cpu.Trace = func(op Operation) {
+		m.mach.Trace = func(op Operation) {
 			m.out.Println(op)
 		}
 	case "off":
-		m.cpu.Trace = nil
+		m.mach.Trace = nil
 	default:
 		return fmt.Errorf("invalid: %v", args[0])
 	}

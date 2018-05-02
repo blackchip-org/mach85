@@ -28,7 +28,7 @@ func TestAdcImmediate(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
 	c.A = 0x08
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0a)
 	have := c.A
 	if want != have {
@@ -46,7 +46,7 @@ func TestAdcWithCarry(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
 	c.A = 0x08
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0b)
 	have := c.A
 	if want != have {
@@ -63,7 +63,7 @@ func TestAdcCarryResult(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
 	c.A = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x01)
 	have := c.A
 	if want != have {
@@ -80,7 +80,7 @@ func TestAdcZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
 	c.A = 0xfe
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x00)
 	have := c.A
 	if want != have {
@@ -97,7 +97,7 @@ func TestAdcZeroSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
 	c.A = 0xf0
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0xf2)
 	have := c.A
 	if want != have {
@@ -114,7 +114,7 @@ func TestAdcOverflowSet(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
 	c.A = 0x7f
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x81)
 	have := c.A
 	if want != have {
@@ -132,7 +132,7 @@ func TestAdcOverflowClear(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x69, 0xff) // lda #$ff (-1)
 	c.V = true
 	c.A = 0x81
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x80)
 	have := c.A
 	if want != have {
@@ -150,7 +150,7 @@ func TestAdcBcd(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x69, 0x02) // lda $#02
 	c.D = true
 	c.A = 0x08
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x10)
 	have := c.A
 	if want != have {
@@ -164,7 +164,7 @@ func TestAdcBcdWithCarry(t *testing.T) {
 	c.D = true
 	c.C = true
 	c.A = 0x08
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x11)
 	have := c.A
 	if want != have {
@@ -177,7 +177,7 @@ func TestAdcBcdCarryResult(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x69, 0x02) // lda #$02
 	c.D = true
 	c.A = 0x99
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x01)
 	have := c.A
 	if want != have {
@@ -190,7 +190,7 @@ func TestAdcZeroPage(t *testing.T) {
 	c.mem.Store(0x0034, 0x08)        // .byte $08
 	c.mem.StoreN(0x0200, 0x65, 0x34) // adc $34
 	c.A = 0x02
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0a)
 	have := c.A
 	if want != have {
@@ -204,7 +204,7 @@ func TestAdcZeroPageX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x75, 0x30) // adc $30,X
 	c.A = 0x02
 	c.X = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0a)
 	have := c.A
 	if want != have {
@@ -217,7 +217,7 @@ func TestAdcAbsolute(t *testing.T) {
 	c.mem.Store(0x02ab, 0x08)              // .byte $08
 	c.mem.StoreN(0x0200, 0x6d, 0xab, 0x02) // adc $02ab
 	c.A = 0x02
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0a)
 	have := c.A
 	if want != have {
@@ -231,7 +231,7 @@ func TestAdcAbsoluteX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x7d, 0xa0, 0x02) // adc $02a0,X
 	c.A = 0x02
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0a)
 	have := c.A
 	if want != have {
@@ -245,7 +245,7 @@ func TestAdcAbsoluteY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x79, 0xa0, 0x02) // adc $02a0,Y
 	c.A = 0x02
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0a)
 	have := c.A
 	if want != have {
@@ -260,7 +260,7 @@ func TestAdcIndirectX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x61, 0x40) // adc ($40,X)
 	c.A = 0x02
 	c.X = 0x0a
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0a)
 	have := c.A
 	if want != have {
@@ -275,7 +275,7 @@ func TestAdcIndirectY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x71, 0x4a) // adc ($4a),Y
 	c.A = 0x02
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0a)
 	have := c.A
 	if want != have {
@@ -290,7 +290,7 @@ func TestAndImmediate(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x29, 0x0f) // and #$0f
 	c.A = 0xcd
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0d)
 	have := c.A
 	if want != have {
@@ -307,7 +307,7 @@ func TestAndZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x29, 0xf0) // and #$f0
 	c.A = 0x0f
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -319,7 +319,7 @@ func TestAndSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa9, 0xf0) // and #$f0
 	c.A = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -332,7 +332,7 @@ func TestAndZeroPage(t *testing.T) {
 	c.mem.Store(0x0034, 0x0f)        // .byte $0f
 	c.mem.StoreN(0x0200, 0x25, 0x34) // and $34
 	c.A = 0xcd
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0d)
 	have := c.A
 	if want != have {
@@ -346,7 +346,7 @@ func TestAndZeroPageX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x35, 0x30) // and $30,X
 	c.A = 0xcd
 	c.X = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0d)
 	have := c.A
 	if want != have {
@@ -359,7 +359,7 @@ func TestAndAbsolute(t *testing.T) {
 	c.mem.Store(0x02ab, 0x0f)              // .byte $0f
 	c.mem.StoreN(0x0200, 0x2d, 0xab, 0x02) // and $02ab
 	c.A = 0xcd
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0d)
 	have := c.A
 	if want != have {
@@ -373,7 +373,7 @@ func TestAndAbsoluteX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x3d, 0xa0, 0x02) // and $02a0,X
 	c.A = 0xcd
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0d)
 	have := c.A
 	if want != have {
@@ -387,7 +387,7 @@ func TestAndAbsoluteY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x39, 0xa0, 0x02) // and $02a0,Y
 	c.A = 0xcd
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0d)
 	have := c.A
 	if want != have {
@@ -402,7 +402,7 @@ func TestAndIndirectX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x21, 0x40) // and ($40,X)
 	c.A = 0xcd
 	c.X = 0x0a
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0d)
 	have := c.A
 	if want != have {
@@ -417,7 +417,7 @@ func TestAndIndirectY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x31, 0x4a) // and ($4a),Y
 	c.A = 0xcd
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x0d)
 	have := c.A
 	if want != have {
@@ -432,7 +432,7 @@ func TestAslAccumulator(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x0a) // asl a
 	c.A = 4
-	c.Run()
+	testRunCPU(c)
 	want := uint8(8)
 	have := c.A
 	if want != have {
@@ -444,7 +444,7 @@ func TestAslSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x0a) // asl a
 	c.A = 1 << 6
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -456,7 +456,7 @@ func TestAslCarry(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x0a) // asl a
 	c.A = 1 << 7
-	c.Run()
+	testRunCPU(c)
 	want := flagC | flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -468,7 +468,7 @@ func TestAslZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x00ab, 4)           // .byte 4
 	c.mem.StoreN(0x0200, 0x06, 0xab) // asl $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(8)
 	have := c.mem.Load(0x00ab)
 	if want != have {
@@ -481,7 +481,7 @@ func TestAslZeroPageX(t *testing.T) {
 	c.mem.Store(0x00ab, 4)           // .byte 4
 	c.mem.StoreN(0x0200, 0x16, 0xa0) // asl $a0
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(8)
 	have := c.mem.Load(0x00ab)
 	if want != have {
@@ -493,7 +493,7 @@ func TestAslAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 4)                 // .byte 4
 	c.mem.StoreN(0x0200, 0x0e, 0xab, 0x02) // asl $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(8)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -506,7 +506,7 @@ func TestAslAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 4)                 // .byte 4
 	c.mem.StoreN(0x0200, 0x1e, 0xa0, 0x02) // asl $02a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(8)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -537,7 +537,7 @@ func TestBitAbsolute(t *testing.T) {
 			c.mem.Store(0x02ab, test.fetch)        // .byte test.fetch
 			c.mem.StoreN(0x0200, 0x2c, 0xab, 0x02) // bit $02ab
 			c.A = test.a
-			c.Run()
+			testRunCPU(c)
 			want := test.expectedFlags
 			have := c.SR()
 			if want != have {
@@ -554,7 +554,7 @@ func TestBitZeroPage(t *testing.T) {
 			c.mem.Store(0xab, test.fetch)    // .byte fetch
 			c.mem.StoreN(0x0200, 0x2c, 0xab) // bit $ab
 			c.A = test.a
-			c.Run()
+			testRunCPU(c)
 			want := test.expectedFlags
 			have := c.SR()
 			if want != have {
@@ -600,7 +600,7 @@ func TestBranches(t *testing.T) {
 			c.mem.StoreN(0x0204, 0x00)          // brk
 			c.mem.StoreN(0x0205, 0xa9, 0x02)    // lda #$02
 			c.SetSR(test.flags)
-			c.Run()
+			testRunCPU(c)
 			want := test.expectedA
 			have := c.A
 			if want != have {
@@ -616,7 +616,7 @@ func TestBranchBackwards(t *testing.T) {
 	c.mem.StoreN(0x0200, 0xa9, 0x01) // lda #$01
 	c.mem.StoreN(0x0202, 0x00)       // brk
 	c.mem.StoreN(0x0203, 0xd0, 0xfb) // bne $0200
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x01)
 	have := c.A
 	if want != have {
@@ -631,7 +631,7 @@ func TestCmpImmediateEqual(t *testing.T) {
 	c := newTestCPU()
 	c.A = 0x12
 	c.mem.StoreN(0x0200, 0xc9, 0x12) // cmp #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -643,7 +643,7 @@ func TestCmpImmediateLessThan(t *testing.T) {
 	c := newTestCPU()
 	c.A = 0x02
 	c.mem.StoreN(0x0200, 0xc9, 0x12) // cmp #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -655,7 +655,7 @@ func TestCmpImmediateGreaterThan(t *testing.T) {
 	c := newTestCPU()
 	c.A = 0x22
 	c.mem.StoreN(0x0200, 0xc9, 0x12) // cmp #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -668,7 +668,7 @@ func TestCmpZeroPage(t *testing.T) {
 	c.A = 0x12
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xc5, 0x34) // cmp $34
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -682,7 +682,7 @@ func TestCmpZeroPageX(t *testing.T) {
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xd5, 0x30) // cmp $30,X
 	c.X = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -695,7 +695,7 @@ func TestCmpAbsolute(t *testing.T) {
 	c.A = 0x12
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xcd, 0xab, 0x02) // cmp $02ab
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -709,7 +709,7 @@ func TestCmpAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xdd, 0xa0, 0x02) // cmp $02a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -723,7 +723,7 @@ func TestCmpAbsoluteY(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xd9, 0xa0, 0x02) // cmp $02a0,Y
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -738,7 +738,7 @@ func TestCmpIndirectX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xc1, 0x40) // cmp ($40,X)
 	c.X = 0x0a
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -753,7 +753,7 @@ func TestCmpIndirectY(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xd1, 0x4a) // cmp ($4a),Y
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -768,7 +768,7 @@ func TestCpxImmediateEqual(t *testing.T) {
 	c := newTestCPU()
 	c.X = 0x12
 	c.mem.StoreN(0x0200, 0xe0, 0x12) // cpx #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -780,7 +780,7 @@ func TestCpxImmediateLessThan(t *testing.T) {
 	c := newTestCPU()
 	c.X = 0x02
 	c.mem.StoreN(0x0200, 0xe0, 0x12) // cpx #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -792,7 +792,7 @@ func TestCpxImmediateGreaterThan(t *testing.T) {
 	c := newTestCPU()
 	c.X = 0x22
 	c.mem.StoreN(0x0200, 0xe0, 0x12) // cpx #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -805,7 +805,7 @@ func TestCpxZeroPage(t *testing.T) {
 	c.X = 0x12
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xe4, 0x34) // cpx $34
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -818,7 +818,7 @@ func TestCpxAbsolute(t *testing.T) {
 	c.X = 0x12
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xec, 0xab, 0x02) // cpx $02ab
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -833,7 +833,7 @@ func TestCpyImmediateEqual(t *testing.T) {
 	c := newTestCPU()
 	c.Y = 0x12
 	c.mem.StoreN(0x0200, 0xc0, 0x12) // cpy #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -845,7 +845,7 @@ func TestCpyImmediateLessThan(t *testing.T) {
 	c := newTestCPU()
 	c.Y = 0x02
 	c.mem.StoreN(0x0200, 0xc0, 0x12) // cpy #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -857,7 +857,7 @@ func TestCpyImmediateGreaterThan(t *testing.T) {
 	c := newTestCPU()
 	c.Y = 0x22
 	c.mem.StoreN(0x0200, 0xc0, 0x12) // cpy #$12
-	c.Run()
+	testRunCPU(c)
 	want := flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -870,7 +870,7 @@ func TestCpyZeroPage(t *testing.T) {
 	c.Y = 0x12
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xc4, 0x34) // cpy $34
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -883,7 +883,7 @@ func TestCpyAbsolute(t *testing.T) {
 	c.Y = 0x12
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xcc, 0xab, 0x02) // cpy $02ab
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -898,7 +898,7 @@ func TestDecZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0xab, 0x12)          // .byte $12
 	c.mem.StoreN(0x0200, 0xc6, 0xab) // dec $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x11)
 	have := c.mem.Load(0xab)
 	if want != have {
@@ -915,7 +915,7 @@ func TestDecZeroPageZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0xab, 0x01)          // .byte $01
 	c.mem.StoreN(0x0200, 0xc6, 0xab) // dec $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x00)
 	have := c.mem.Load(0xab)
 	if want != have {
@@ -932,7 +932,7 @@ func TestDecZeroPageSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0xab, 0x00)          // .byte $00
 	c.mem.StoreN(0x0200, 0xc6, 0xab) // dec $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0xff)
 	have := c.mem.Load(0xab)
 	if want != have {
@@ -950,7 +950,7 @@ func TestDecZeroPageX(t *testing.T) {
 	c.mem.Store(0xab, 0x12)          // .byte $12
 	c.mem.StoreN(0x0200, 0xd6, 0xa0) // dec $a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x11)
 	have := c.mem.Load(0xab)
 	if want != have {
@@ -967,7 +967,7 @@ func TestDecAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xce, 0xab, 0x02) // dec $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x11)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -985,7 +985,7 @@ func TestDecAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xde, 0xa0, 0x02) // dec $02a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x11)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -1005,7 +1005,7 @@ func TestDex(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xca)
 	c.X = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x11)
 	have := c.X
 	if want != have {
@@ -1017,7 +1017,7 @@ func TestDexZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xca)
 	c.X = 0x01
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1029,7 +1029,7 @@ func TestDexSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xca)
 	c.X = 0x00
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1044,7 +1044,7 @@ func TestDey(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x88)
 	c.Y = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x11)
 	have := c.Y
 	if want != have {
@@ -1056,7 +1056,7 @@ func TestDeyZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x88)
 	c.Y = 0x01
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1068,7 +1068,7 @@ func TestDeySigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x88)
 	c.Y = 0x00
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1083,7 +1083,7 @@ func TestEorImmdediate(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x200, 0x49, 0x01) // eor #$01
 	c.A = 0x02
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1100,7 +1100,7 @@ func TestEorImmediateZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x200, 0x49, 0x01) // eor #$01
 	c.A = 0x01
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x00)
 	have := c.A
 	if want != have {
@@ -1117,7 +1117,7 @@ func TestEorImmediateSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x200, 0x49, 0x0f) // eor #$0f
 	c.A = 0xf0
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0xff)
 	have := c.A
 	if want != have {
@@ -1135,7 +1135,7 @@ func TestEorZeroPage(t *testing.T) {
 	c.mem.Store(0x0034, 0x01)        // .byte $01
 	c.mem.StoreN(0x0200, 0x45, 0x34) // eor $34
 	c.A = 0x02
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1149,7 +1149,7 @@ func TestEorZeroPageX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x55, 0x30) // eor $30,X
 	c.A = 0x02
 	c.X = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1162,7 +1162,7 @@ func TestEorAbsolute(t *testing.T) {
 	c.mem.Store(0x02ab, 0x01)              // .byte $01
 	c.mem.StoreN(0x0200, 0x4d, 0xab, 0x02) // eor $02ab
 	c.A = 0x02
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1176,7 +1176,7 @@ func TestEorAbsoluteX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x5d, 0xa0, 0x02) // eor $02a0,X
 	c.A = 0x02
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1190,7 +1190,7 @@ func TestEorAbsoluteY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x59, 0xa0, 0x02) // eor $02a0,Y
 	c.A = 0x02
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1205,7 +1205,7 @@ func TestEorIndirectX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x41, 0x40) // eor ($40,X)
 	c.A = 0x02
 	c.X = 0x0a
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1220,7 +1220,7 @@ func TestEorIndirectY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x51, 0x4a) // lda ($4a),Y
 	c.A = 0x02
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1235,7 +1235,7 @@ func TestClc(t *testing.T) {
 	c := newTestCPU()
 	c.C = true
 	c.mem.StoreN(0x0200, 0x18) // clc
-	c.Run()
+	testRunCPU(c)
 	want := flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1247,7 +1247,7 @@ func TestSec(t *testing.T) {
 	c := newTestCPU()
 	c.C = false
 	c.mem.StoreN(0x0200, 0x38) // sec
-	c.Run()
+	testRunCPU(c)
 	want := flagC | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1259,7 +1259,7 @@ func TestCli(t *testing.T) {
 	c := newTestCPU()
 	c.I = true
 	c.mem.StoreN(0x0200, 0x58) // cli
-	c.Run()
+	testRunCPU(c)
 	want := flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1271,7 +1271,7 @@ func TestSei(t *testing.T) {
 	c := newTestCPU()
 	c.I = false
 	c.mem.StoreN(0x0200, 0x78) // sei
-	c.Run()
+	testRunCPU(c)
 	want := flagI | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1283,7 +1283,7 @@ func TestClv(t *testing.T) {
 	c := newTestCPU()
 	c.V = true
 	c.mem.StoreN(0x0200, 0xb8) // clv
-	c.Run()
+	testRunCPU(c)
 	want := flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1295,7 +1295,7 @@ func TestCld(t *testing.T) {
 	c := newTestCPU()
 	c.D = true
 	c.mem.StoreN(0x0200, 0xd8) // cld
-	c.Run()
+	testRunCPU(c)
 	want := flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1307,7 +1307,7 @@ func TestSed(t *testing.T) {
 	c := newTestCPU()
 	c.D = false
 	c.mem.StoreN(0x0200, 0xf8) // sed
-	c.Run()
+	testRunCPU(c)
 	want := flagD | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1322,7 +1322,7 @@ func TestIncZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0xab, 0x12)          // .byte $12
 	c.mem.StoreN(0x0200, 0xe6, 0xab) // inc $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x13)
 	have := c.mem.Load(0xab)
 	if want != have {
@@ -1339,7 +1339,7 @@ func TestIncZeroPageZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0xab, 0xff)          // .byte $ff
 	c.mem.StoreN(0x0200, 0xe6, 0xab) // inc $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x00)
 	have := c.mem.Load(0xab)
 	if want != have {
@@ -1356,7 +1356,7 @@ func TestIncZeroPageSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0xab, 0x7f)          // .byte $7f
 	c.mem.StoreN(0x0200, 0xe6, 0xab) // inc $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x80)
 	have := c.mem.Load(0xab)
 	if want != have {
@@ -1374,7 +1374,7 @@ func TestIncZeroPageX(t *testing.T) {
 	c.mem.Store(0xab, 0x12)          // .byte $12
 	c.mem.StoreN(0x0200, 0xf6, 0xa0) // inc $a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x13)
 	have := c.mem.Load(0xab)
 	if want != have {
@@ -1391,7 +1391,7 @@ func TestIncAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xee, 0xab, 0x02) // inc $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x13)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -1409,7 +1409,7 @@ func TestIncAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xfe, 0xa0, 0x02) // inc $02a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x13)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -1429,7 +1429,7 @@ func TestInx(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xe8)
 	c.X = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x13)
 	have := c.X
 	if want != have {
@@ -1441,7 +1441,7 @@ func TestInxZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xe8)
 	c.X = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1453,7 +1453,7 @@ func TestInxSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xe8)
 	c.X = 0x7f
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1468,7 +1468,7 @@ func TestIny(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xc8)
 	c.Y = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x13)
 	have := c.Y
 	if want != have {
@@ -1480,7 +1480,7 @@ func TestInyZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xc8)
 	c.Y = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1492,7 +1492,7 @@ func TestInySigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xc8)
 	c.Y = 0x7f
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1551,7 +1551,7 @@ func TestJsr(t *testing.T) {
 func TestLdaImmediate(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa9, 0x12) // lda #$12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -1567,7 +1567,7 @@ func TestLdaImmediate(t *testing.T) {
 func TestLdaZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa9, 0x00) // lda #$00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1578,7 +1578,7 @@ func TestLdaZero(t *testing.T) {
 func TestLdaSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa9, 0xff) // lda #$ff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1590,7 +1590,7 @@ func TestLdaZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xa5, 0x34) // lda $34
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -1603,7 +1603,7 @@ func TestLdaZeroPageX(t *testing.T) {
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xb5, 0x30) // lda $30,X
 	c.X = 0x4
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -1615,7 +1615,7 @@ func TestLdaAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xad, 0xab, 0x02) // lda $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -1628,7 +1628,7 @@ func TestLdaAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xbd, 0xa0, 0x02) // lda $02a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -1641,7 +1641,7 @@ func TestLdaAbsoluteY(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xb9, 0xa0, 0x02) // lda $02a0,Y
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -1655,7 +1655,7 @@ func TestLdaIndirectX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xa1, 0x40) // lda ($40,X)
 	c.X = 0x0a
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -1669,7 +1669,7 @@ func TestLdaIndirectY(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xb1, 0x4a) // lda ($4a),Y
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -1683,7 +1683,7 @@ func TestLdaIndirectY(t *testing.T) {
 func TestLdxImmediate(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa2, 0x12) // ldx #$12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.X
 	if want != have {
@@ -1699,7 +1699,7 @@ func TestLdxImmediate(t *testing.T) {
 func TestLdxZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa2, 0x00) // ldx #$00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1710,7 +1710,7 @@ func TestLdxZero(t *testing.T) {
 func TestLdxSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa2, 0xff) // ldx #$ff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1722,7 +1722,7 @@ func TestLdxZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xa6, 0x34) // ldx $34
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.X
 	if want != have {
@@ -1735,7 +1735,7 @@ func TestLdxZeroPageY(t *testing.T) {
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xb6, 0x30) // ldx $30,Y
 	c.Y = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.X
 	if want != have {
@@ -1747,7 +1747,7 @@ func TestLdxAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xae, 0xab, 0x02) // ldx $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.X
 	if want != have {
@@ -1760,7 +1760,7 @@ func TestLdxAbsoluteY(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xbe, 0xa0, 0x02) // ldx $02a0,Y
 	c.Y = 0xb
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.X
 	if want != have {
@@ -1774,7 +1774,7 @@ func TestLdxAbsoluteY(t *testing.T) {
 func TestLdyImmediate(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa0, 0x12) // ldy #$12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.Y
 	if want != have {
@@ -1790,7 +1790,7 @@ func TestLdyImmediate(t *testing.T) {
 func TestLdyZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa0, 0x00) // ldy #$00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1801,7 +1801,7 @@ func TestLdyZero(t *testing.T) {
 func TestLdySigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa0, 0xff) // ldy #$ff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1813,7 +1813,7 @@ func TestLdyZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xa4, 0x34) // ldy $34
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.Y
 	if want != have {
@@ -1826,7 +1826,7 @@ func TestLdyZeroPageX(t *testing.T) {
 	c.mem.Store(0x0034, 0x12)        // .byte $12
 	c.mem.StoreN(0x0200, 0xb4, 0x30) // ldy $30,X
 	c.X = 0x4
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.Y
 	if want != have {
@@ -1838,7 +1838,7 @@ func TestLdyAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xac, 0xab, 0x02) // ldy $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.Y
 	if want != have {
@@ -1851,7 +1851,7 @@ func TestLdyAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x12)              // .byte $12
 	c.mem.StoreN(0x0200, 0xbc, 0xa0, 0x02) // ldy $02a0,X
 	c.X = 0xb
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.Y
 	if want != have {
@@ -1866,7 +1866,7 @@ func TestLsrAccumulator(t *testing.T) {
 	c := newTestCPU()
 	c.A = 0x04
 	c.mem.StoreN(0x0200, 0x04a) // lsr a
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -1883,7 +1883,7 @@ func TestLsrShiftOut(t *testing.T) {
 	c := newTestCPU()
 	c.A = 0x01
 	c.mem.StoreN(0x0200, 0x04a) // lsr a
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x00)
 	have := c.A
 	if want != have {
@@ -1900,7 +1900,7 @@ func TestLsrZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x00ab, 4)           // .byte 4
 	c.mem.StoreN(0x0200, 0x46, 0xab) // lsr $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(2)
 	have := c.mem.Load(0x00ab)
 	if want != have {
@@ -1913,7 +1913,7 @@ func TestLsrZeroPageX(t *testing.T) {
 	c.mem.Store(0x00ab, 4)           // .byte 4
 	c.mem.StoreN(0x0200, 0x56, 0xa0) // lsr $a0
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(2)
 	have := c.mem.Load(0x00ab)
 	if want != have {
@@ -1925,7 +1925,7 @@ func TestLsrAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 4)                 // .byte 4
 	c.mem.StoreN(0x0200, 0x4e, 0xab, 0x02) // lsr $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(2)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -1938,7 +1938,7 @@ func TestLsrAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 4)                 // .byte 4
 	c.mem.StoreN(0x0200, 0x5e, 0xa0, 0x02) // lsr $02a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(2)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -1967,7 +1967,7 @@ func TestOraImmediate(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x09, 0x01) // ora #$01
 	c.A = 0x02
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -1984,7 +1984,7 @@ func TestOraZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x09, 0x00) // ora #$00
 	c.A = 0x00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -1996,7 +1996,7 @@ func TestOraSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0xa9, 0xf0) // and #$f0
 	c.A = 0x0f
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2009,7 +2009,7 @@ func TestOraZeroPage(t *testing.T) {
 	c.mem.Store(0x0034, 0x01)        // .byte $01
 	c.mem.StoreN(0x0200, 0x05, 0x34) // ora $34
 	c.A = 0x02
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -2023,7 +2023,7 @@ func TestOraZeroPageX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x15, 0x30) // ora $30,X
 	c.A = 0x02
 	c.X = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -2036,7 +2036,7 @@ func TestOraAbsolute(t *testing.T) {
 	c.mem.Store(0x02ab, 0x01)              // .byte $01
 	c.mem.StoreN(0x0200, 0x0d, 0xab, 0x02) // ora $02ab
 	c.A = 0x02
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -2050,7 +2050,7 @@ func TestOraAbsoluteX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x1d, 0xa0, 0x02) // ora $02a0,X
 	c.A = 0x02
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -2064,7 +2064,7 @@ func TestOraAbsoluteY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x19, 0xa0, 0x02) // ora $02a0,Y
 	c.A = 0x02
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -2079,7 +2079,7 @@ func TestOraIndirectX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x01, 0x40) // ora ($40,X)
 	c.A = 0x02
 	c.X = 0x0a
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -2094,7 +2094,7 @@ func TestOraIndirectY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x11, 0x4a) // ora ($4a),Y
 	c.A = 0x02
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x03)
 	have := c.A
 	if want != have {
@@ -2109,7 +2109,7 @@ func TestPha(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x48)
 	c.A = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(Stack + 0xff)
 	if want != have {
@@ -2124,7 +2124,7 @@ func TestPhp(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x08)
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := flagC | flag5
 	have := c.mem.Load(Stack + 0xff)
 	if want != have {
@@ -2140,7 +2140,7 @@ func TestPla(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x68)
 	c.SP = 0xfe
 	c.mem.Store(Stack+0xff, 0x12)
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -2153,7 +2153,7 @@ func TestPlaZero(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x68)
 	c.SP = 0xfe
 	c.mem.Store(Stack+0xff, 0x00)
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2166,7 +2166,7 @@ func TestPlaSigned(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x68)
 	c.SP = 0xfe
 	c.mem.Store(Stack+0xff, 0xff)
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2182,7 +2182,7 @@ func TestPlp(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x28)
 	c.SP = 0xfe
 	c.mem.Store(Stack+0xff, flagC|flagN)
-	c.Run()
+	testRunCPU(c)
 	want := flagC | flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2197,7 +2197,7 @@ func TestRolAccumulator(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x2a) // rol a
 	c.A = 4
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x08)
 	have := c.A
 	if want != have {
@@ -2214,7 +2214,7 @@ func TestRolRotateOut(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x2a) // rol a
 	c.A = 1 << 7
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0)
 	have := c.A
 	if want != have {
@@ -2232,7 +2232,7 @@ func TestRolRotateIn(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x2a) // rol a
 	c.C = true
 	c.A = 0
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x01)
 	have := c.A
 	if want != have {
@@ -2249,7 +2249,7 @@ func TestRolSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x2a) // rol a
 	c.A = 1 << 6
-	c.Run()
+	testRunCPU(c)
 	want := uint8(1 << 7)
 	have := c.A
 	if want != have {
@@ -2266,7 +2266,7 @@ func TestRolZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x00ab, 0x04)        // .byte 0x04
 	c.mem.StoreN(0x0200, 0x26, 0xab) // rol $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x08)
 	have := c.mem.Load(0x00ab)
 	if want != have {
@@ -2278,7 +2278,7 @@ func TestRolZeroPageX(t *testing.T) {
 	c.mem.Store(0x00ab, 0x04)        // .byte 0x04
 	c.mem.StoreN(0x0200, 0x36, 0xa0) // rol $a0
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x08)
 	have := c.mem.Load(0x00ab)
 	if want != have {
@@ -2290,7 +2290,7 @@ func TestRolAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 0x04)              // .byte 0x04
 	c.mem.StoreN(0x0200, 0x2e, 0xab, 0x02) // rol $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x08)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2303,7 +2303,7 @@ func TestRolAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x04)              // .byte 0x04
 	c.mem.StoreN(0x0200, 0x3e, 0xa0, 0x02) // rol $02a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x08)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2318,7 +2318,7 @@ func TestRorAccumulator(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x6a) // ror a
 	c.A = 4
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -2334,7 +2334,7 @@ func TestRorRotateOut(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x6a) // ror a
 	c.A = 1
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0)
 	have := c.A
 	if want != have {
@@ -2352,7 +2352,7 @@ func TestRorRotateIn(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x6a) // ror a
 	c.C = true
 	c.A = 0
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x80)
 	have := c.A
 	if want != have {
@@ -2369,7 +2369,7 @@ func TestRorZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x00ab, 0x04)        // .byte 0x04
 	c.mem.StoreN(0x0200, 0x66, 0xab) // ror $ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.mem.Load(0x00ab)
 	if want != have {
@@ -2382,7 +2382,7 @@ func TestRorZeroPageX(t *testing.T) {
 	c.mem.Store(0x00ab, 0x04)        // .byte 0x04
 	c.mem.StoreN(0x0200, 0x76, 0xa0) // ror $a0
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.mem.Load(0x00ab)
 	if want != have {
@@ -2394,7 +2394,7 @@ func TestRorAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x02ab, 0x04)              // .byte 0x04
 	c.mem.StoreN(0x0200, 0x6e, 0xab, 0x02) // ror $02ab
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2407,7 +2407,7 @@ func TestRorAbsoluteX(t *testing.T) {
 	c.mem.Store(0x02ab, 0x04)              // .byte 0x04
 	c.mem.StoreN(0x0200, 0x7e, 0xa0, 0x02) // ror $02a0,X
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2423,7 +2423,7 @@ func TestRti(t *testing.T) {
 	c.push16(0x1234)
 	c.push(0xff)
 	c.mem.Store(0x0200, 0x40) //rti
-	c.Run()
+	testRunCPU(c)
 	wantSR := uint8(0x0ff)
 	haveSR := c.SR()
 	if wantSR != haveSR {
@@ -2459,7 +2459,7 @@ func TestSbcImmediate(t *testing.T) {
 	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
 	c.A = 0x08
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x06)
 	have := c.A
 	if want != have {
@@ -2477,7 +2477,7 @@ func TestAdcWithBorrow(t *testing.T) {
 	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
 	c.A = 0x08
 	c.C = false
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x05)
 	have := c.A
 	if want != have {
@@ -2495,7 +2495,7 @@ func TestSbcCarryResult(t *testing.T) {
 	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
 	c.A = 0x01
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0xff)
 	have := c.A
 	if want != have {
@@ -2513,7 +2513,7 @@ func TestSbcZero(t *testing.T) {
 	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
 	c.A = 0x02
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x00)
 	have := c.A
 	if want != have {
@@ -2531,7 +2531,7 @@ func TestSbcOverflowSet(t *testing.T) {
 	c.mem.StoreN(0x0200, 0xe9, 0x02) // sbc #$02
 	c.A = 0x81
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x7f)
 	have := c.A
 	if want != have {
@@ -2550,7 +2550,7 @@ func TestSbcOverflowClear(t *testing.T) {
 	c.A = 0x82
 	c.C = true
 	c.V = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x83)
 	have := c.A
 	if want != have {
@@ -2569,7 +2569,7 @@ func TestSbcBcd(t *testing.T) {
 	c.D = true
 	c.C = true
 	c.A = 0x11
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x09)
 	have := c.A
 	if want != have {
@@ -2583,7 +2583,7 @@ func TestSbcBcdWithBorrow(t *testing.T) {
 	c.D = true
 	c.C = false
 	c.A = 0x11
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x08)
 	have := c.A
 	if want != have {
@@ -2597,7 +2597,7 @@ func TestSbcBcdBorrowResult(t *testing.T) {
 	c.D = true
 	c.C = true
 	c.A = 0x01
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x99)
 	have := c.A
 	if want != have {
@@ -2611,7 +2611,7 @@ func TestSbcZeroPage(t *testing.T) {
 	c.mem.StoreN(0x0200, 0xe5, 0x34) // sbc $34
 	c.A = 0x0a
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -2626,7 +2626,7 @@ func TestSbcZeroPageX(t *testing.T) {
 	c.A = 0x0a
 	c.X = 0x04
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -2640,7 +2640,7 @@ func TestSbcAbsolute(t *testing.T) {
 	c.mem.StoreN(0x0200, 0xed, 0xab, 0x02) // sbc $02ab
 	c.A = 0x0a
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -2655,7 +2655,7 @@ func TestSbcAbsoluteX(t *testing.T) {
 	c.A = 0x0a
 	c.X = 0x0b
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -2670,7 +2670,7 @@ func TestSbcAbsoluteY(t *testing.T) {
 	c.A = 0x0a
 	c.Y = 0x0b
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -2686,7 +2686,7 @@ func TestSbcIndirectX(t *testing.T) {
 	c.A = 0x0a
 	c.X = 0x0a
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -2702,7 +2702,7 @@ func TestSbcIndirectY(t *testing.T) {
 	c.A = 0x0a
 	c.Y = 0x0b
 	c.C = true
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x02)
 	have := c.A
 	if want != have {
@@ -2717,7 +2717,7 @@ func TestStaZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x85, 0x34) // sta $34
 	c.A = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x34)
 	if want != have {
@@ -2730,7 +2730,7 @@ func TestStaZeroPageX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x95, 0x30) // sta $30,X
 	c.A = 0x12
 	c.X = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x34)
 	if want != have {
@@ -2742,7 +2742,7 @@ func TestStaAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x8d, 0xab, 0x02) // sta $02ab
 	c.A = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2755,7 +2755,7 @@ func TestStaAbsoluteX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x9d, 0xa0, 0x02) // sta $02a0,X
 	c.A = 0x12
 	c.X = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2768,7 +2768,7 @@ func TestStaAbsoluteY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x99, 0xa0, 0x02) // sta $02a0,Y
 	c.A = 0x12
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2782,7 +2782,7 @@ func TestStaIndirectX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x81, 0x40) // sta ($40,X)
 	c.A = 0x12
 	c.X = 0x0a
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2796,7 +2796,7 @@ func TestStaIndirectY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x91, 0x4a) // sta ($4a),Y
 	c.A = 0x12
 	c.Y = 0x0b
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2812,7 +2812,7 @@ func TestStxZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x86, 0x34) // stx $34
 	c.X = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x34)
 	if want != have {
@@ -2825,7 +2825,7 @@ func TestStxZeroPageY(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x96, 0x30) // stx $30,Y
 	c.X = 0x12
 	c.Y = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x34)
 	if want != have {
@@ -2837,7 +2837,7 @@ func TestStxAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x8e, 0xab, 0x02) // stx $02ab
 	c.X = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2853,7 +2853,7 @@ func TestStyZeroPage(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x84, 0x34) // sty $34
 	c.Y = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x34)
 	if want != have {
@@ -2866,7 +2866,7 @@ func TestStyZeroPageX(t *testing.T) {
 	c.mem.StoreN(0x0200, 0x94, 0x30) // sty $30,X
 	c.Y = 0x12
 	c.X = 0x04
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x34)
 	if want != have {
@@ -2878,7 +2878,7 @@ func TestStyAbsolute(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x8c, 0xab, 0x02) // sty $02ab
 	c.Y = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.mem.Load(0x02ab)
 	if want != have {
@@ -2893,7 +2893,7 @@ func TestTax(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xaa)
 	c.A = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.X
 	if want != have {
@@ -2905,7 +2905,7 @@ func TestTaxZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xaa)
 	c.A = 0x00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2917,7 +2917,7 @@ func TestTaxSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xaa)
 	c.A = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2932,7 +2932,7 @@ func TestTay(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xa8)
 	c.A = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.Y
 	if want != have {
@@ -2944,7 +2944,7 @@ func TestTayZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xa8)
 	c.A = 0x00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2956,7 +2956,7 @@ func TestTaySigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xa8)
 	c.A = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2971,7 +2971,7 @@ func TestTsx(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xba)
 	c.SP = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.X
 	if want != have {
@@ -2983,7 +2983,7 @@ func TestTsxZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xba)
 	c.SP = 0x00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -2995,7 +2995,7 @@ func TestTsxSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xba)
 	c.SP = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -3010,7 +3010,7 @@ func TestTxa(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x8a)
 	c.X = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -3022,7 +3022,7 @@ func TestTxaZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x8a)
 	c.X = 0x00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -3034,7 +3034,7 @@ func TestTxaSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x8a)
 	c.X = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -3049,7 +3049,7 @@ func TestTxs(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x9a)
 	c.X = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.SP
 	if want != have {
@@ -3064,7 +3064,7 @@ func TestTya(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x98)
 	c.Y = 0x12
-	c.Run()
+	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
 	if want != have {
@@ -3076,7 +3076,7 @@ func TestTyaZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x98)
 	c.Y = 0x00
-	c.Run()
+	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
 	if want != have {
@@ -3088,7 +3088,7 @@ func TestTyaSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0x98)
 	c.Y = 0xff
-	c.Run()
+	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
 	if want != have {
