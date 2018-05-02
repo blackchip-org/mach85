@@ -13,19 +13,22 @@ import (
 
 	"github.com/blackchip-org/mach85/encoding"
 	"github.com/blackchip-org/mach85/encoding/petscii"
+	"github.com/blackchip-org/mach85/encoding/screen"
 )
 
 const (
-	CmdBreakpoint    = "b"
-	CmdDisassemble   = "d"
-	CmdGo            = "g"
-	CmdMemory        = "m"
-	CmdMemoryShifted = "M"
-	CmdPoke          = "p"
-	CmdQuit          = "quit"
-	CmdReset         = "reset"
-	CmdRegisters     = "r"
-	CmdTrace         = "t"
+	CmdBreakpoint          = "b"
+	CmdDisassemble         = "d"
+	CmdGo                  = "g"
+	CmdMemory              = "m"
+	CmdMemoryShifted       = "M"
+	CmdScreenMemory        = "sm"
+	CmdScreenMemoryShifted = "SM"
+	CmdPoke                = "p"
+	CmdQuit                = "quit"
+	CmdReset               = "reset"
+	CmdRegisters           = "r"
+	CmdTrace               = "t"
 )
 
 var (
@@ -104,6 +107,10 @@ func (m *Monitor) parse(line string) {
 		err = m.memory(args, petscii.UnshiftedDecoder)
 	case CmdMemoryShifted:
 		err = m.memory(args, petscii.ShiftedDecoder)
+	case CmdScreenMemory:
+		err = m.memory(args, screen.UnshiftedDecoder)
+	case CmdScreenMemoryShifted:
+		err = m.memory(args, screen.ShiftedDecoder)
 	case CmdPoke:
 		err = m.poke(args)
 	case CmdQuit:

@@ -5,6 +5,7 @@ import (
 
 	"github.com/blackchip-org/mach85/encoding"
 	"github.com/blackchip-org/mach85/encoding/petscii"
+	"github.com/blackchip-org/mach85/encoding/screen"
 )
 
 func main() {
@@ -12,6 +13,10 @@ func main() {
 	printTable(petscii.UnshiftedDecoder)
 	fmt.Printf("\nshifted\n")
 	printTable(petscii.ShiftedDecoder)
+	fmt.Printf("\nscreen unshifted\n")
+	printTable(screen.UnshiftedDecoder)
+	fmt.Printf("\nscreen shifted\n")
+	printTable(screen.ShiftedDecoder)
 }
 
 func printTable(decode encoding.Decoder) {
