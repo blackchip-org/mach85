@@ -12,8 +12,13 @@ type Mach85 struct {
 	Breakpoints map[uint16]bool
 	mem         *Memory
 	cpu         *CPU
+	devices     []Device
 	dasm        *Disassembler
 	stop        chan bool
+}
+
+type Device interface {
+	Service()
 }
 
 var roms = []struct {
@@ -34,6 +39,9 @@ func New() *Mach85 {
 		dasm:        NewDisassembler(mem),
 		stop:        make(chan bool),
 		Breakpoints: map[uint16]bool{},
+		devices: []Device{
+			newHackDevice(mem),
+		},
 	}
 	return m
 }
@@ -73,6 +81,9 @@ func (m *Mach85) Run() {
 				m.Trace(m.dasm.Next())
 			}
 			m.cpu.Next()
+		}
+		for _, d := range m.devices {
+			d.Service()
 		}
 	}
 }
