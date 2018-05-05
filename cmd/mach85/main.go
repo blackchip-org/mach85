@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/blackchip-org/mach85"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 func main() {
@@ -18,8 +19,21 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println()
-	mon := mach85.NewMonitor(mach)
 
+	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
+		log.Fatalf("unable to initialize sdl: %v", err)
+	}
+	defer sdl.Quit()
+	sdl.GLSetSwapInterval(1)
+	video, err := mach85.NewVideo()
+	if err != nil {
+		log.Fatalf("unable to create window: %v", err)
+	}
+
+	mach.AddDevice(video)
+	mach.AddDevice(mach85.NewHackDevice(mach.Memory))
+
+	mon := mach85.NewMonitor(mach)
 	in, err := os.Open("c64rom_en.source")
 	if err != nil {
 		log.Fatal(err)

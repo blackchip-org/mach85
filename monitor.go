@@ -54,10 +54,10 @@ func NewMonitor(mach *Mach85) *Monitor {
 	mon := &Monitor{
 		mach:         mach,
 		cpu:          mach.cpu,
-		mem:          mach.mem,
+		mem:          mach.Memory,
 		in:           os.Stdin,
 		out:          log.New(os.Stdout, "", 0),
-		Disassembler: NewDisassembler(mach.mem),
+		Disassembler: NewDisassembler(mach.Memory),
 		interactive:  true,
 	}
 	return mon

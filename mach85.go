@@ -10,7 +10,7 @@ import (
 type Mach85 struct {
 	Trace       func(op Operation)
 	Breakpoints map[uint16]bool
-	mem         *Memory
+	Memory      *Memory
 	cpu         *CPU
 	devices     []Device
 	dasm        *Disassembler
@@ -34,14 +34,12 @@ func New() *Mach85 {
 	mem := NewMemory64k()
 	cpu := NewCPU(mem)
 	m := &Mach85{
-		mem:         mem,
+		Memory:      mem,
 		cpu:         cpu,
 		dasm:        NewDisassembler(mem),
 		stop:        make(chan bool),
 		Breakpoints: map[uint16]bool{},
-		devices: []Device{
-			newHackDevice(mem),
-		},
+		devices:     []Device{},
 	}
 	return m
 }
@@ -56,10 +54,10 @@ func (m *Mach85) LoadROM() error {
 		if checksum != rom.checksum {
 			return fmt.Errorf("%v: invalid checksum", rom.file)
 		}
-		m.mem.Import(rom.address, data)
+		m.Memory.Import(rom.address, data)
 		log.Printf("$%04x: %v\n", rom.address, rom.file)
 	}
-	m.cpu.PC = m.mem.Load16(ResetVector) - 1
+	m.cpu.PC = m.Memory.Load16(ResetVector) - 1
 	return nil
 }
 
@@ -95,4 +93,8 @@ func (m *Mach85) Stop() {
 func (m *Mach85) Reset() {
 	m.cpu.Reset()
 	m.Run()
+}
+
+func (m *Mach85) AddDevice(d Device) {
+	m.devices = append(m.devices, d)
 }

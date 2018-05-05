@@ -19,7 +19,7 @@ func newTestMonitor() (*Monitor, *bytes.Buffer) {
 
 func TestBreakpointOn(t *testing.T) {
 	mon, _ := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
+	mon.mach.Memory.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
 	mon.in = strings.NewReader("b 0x0802 on \n g")
 	mon.Run()
 	want := uint16(0x0801)
@@ -31,7 +31,7 @@ func TestBreakpointOn(t *testing.T) {
 
 func TestBreakpointOff(t *testing.T) {
 	mon, _ := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
+	mon.mach.Memory.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
 	mon.in = strings.NewReader("b 0x0802 on \n b 0x0802 off \n g")
 	mon.Run()
 	want := uint16(0x0804)
@@ -67,7 +67,7 @@ func TestBreakpointTooManyArguments(t *testing.T) {
 
 func TestDisassembleFirstLine(t *testing.T) {
 	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800,
+	mon.mach.Memory.StoreN(0x0800,
 		0xa9, 0x12, // lda #$12
 		0x00, // brk
 	)
@@ -83,7 +83,7 @@ func TestDisassembleFirstLine(t *testing.T) {
 
 func TestDisassembleLastLine(t *testing.T) {
 	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800+uint16(dasmPageLen-1),
+	mon.mach.Memory.StoreN(0x0800+uint16(dasmPageLen-1),
 		0xa9, 0x34, // lda #$34
 	)
 	mon.in = strings.NewReader("d")
@@ -146,7 +146,7 @@ func TestDisassembleTooManyArguments(t *testing.T) {
 
 func TestGo(t *testing.T) {
 	mon, _ := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800,
+	mon.mach.Memory.StoreN(0x0800,
 		0xa9, 0x12, // lda #$12
 		0x00, // brk
 	)
@@ -161,7 +161,7 @@ func TestGo(t *testing.T) {
 
 func TestGoContinued(t *testing.T) {
 	mon, _ := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800,
+	mon.mach.Memory.StoreN(0x0800,
 		0xa9, 0x12, // lda #$12
 		0x00,       // brk
 		0xea,       // nop
@@ -179,7 +179,7 @@ func TestGoContinued(t *testing.T) {
 
 func TestGoAddress(t *testing.T) {
 	mon, _ := newTestMonitor()
-	mon.mach.mem.StoreN(0x0900,
+	mon.mach.Memory.StoreN(0x0900,
 		0xa9, 0x12, // lda #$12
 		0x00, // brk
 	)
@@ -194,7 +194,7 @@ func TestGoAddress(t *testing.T) {
 
 func TestGoAddressOldHexSigil(t *testing.T) {
 	mon, _ := newTestMonitor()
-	mon.mach.mem.StoreN(0x0900,
+	mon.mach.Memory.StoreN(0x0900,
 		0xa9, 0x12, // lda #$12
 		0x00, // brk
 	)
@@ -209,7 +209,7 @@ func TestGoAddressOldHexSigil(t *testing.T) {
 
 func TestGoAddressNewHexSigil(t *testing.T) {
 	mon, _ := newTestMonitor()
-	mon.mach.mem.StoreN(0x0900,
+	mon.mach.Memory.StoreN(0x0900,
 		0xa9, 0x12, // lda #$12
 		0x00, // brk
 	)
@@ -224,7 +224,7 @@ func TestGoAddressNewHexSigil(t *testing.T) {
 
 func TestGoAddressDecimalSigil(t *testing.T) {
 	mon, _ := newTestMonitor()
-	mon.mach.mem.StoreN(0x0900,
+	mon.mach.Memory.StoreN(0x0900,
 		0xa9, 0x12, // lda #$12
 		0x00, // brk
 	)
@@ -458,7 +458,7 @@ func TestPokeNotEnoughArguments(t *testing.T) {
 
 func TestTrace(t *testing.T) {
 	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800,
+	mon.mach.Memory.StoreN(0x0800,
 		0xa9, 0x34, // lda #$34
 	)
 	mon.in = strings.NewReader("t on \n t \n g")
@@ -477,7 +477,7 @@ func TestTrace(t *testing.T) {
 
 func TestTraceDisabled(t *testing.T) {
 	mon, out := newTestMonitor()
-	mon.mach.mem.StoreN(0x0800,
+	mon.mach.Memory.StoreN(0x0800,
 		0xa9, 0x34, // lda #$34
 	)
 	mon.in = strings.NewReader("t on \n t off \n t \n g")

@@ -1,13 +1,13 @@
 package mach85
 
-type hackDevice struct {
+type HackDevice struct {
 	mem *Memory
 }
 
-func newHackDevice(m *Memory) *hackDevice {
-	return &hackDevice{mem: m}
+func NewHackDevice(m *Memory) *HackDevice {
+	return &HackDevice{mem: m}
 }
 
-func (d *hackDevice) Service() {
+func (d *HackDevice) Service() {
 	d.mem.Store(0xd012, 00) // set raster line to zero
 }
