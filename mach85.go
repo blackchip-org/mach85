@@ -27,6 +27,7 @@ var roms = []struct {
 	checksum string
 }{
 	{"basic.rom", 0xa000, "79015323128650c742a3694c9429aa91f355905e"},
+	{"chargen.rom", 0xd000, "adc7c31e18c7c7413d54802ef2f4193da14711aa"},
 	{"kernal.rom", 0xe000, "1d503e56df85a62fee696e7618dc5b4e781df1bb"},
 }
 

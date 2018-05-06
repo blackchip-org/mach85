@@ -25,7 +25,7 @@ func main() {
 	}
 	defer sdl.Quit()
 	sdl.GLSetSwapInterval(1)
-	video, err := mach85.NewVideo()
+	video, err := mach85.NewVideo(mach.Memory)
 	if err != nil {
 		log.Fatalf("unable to create window: %v", err)
 	}

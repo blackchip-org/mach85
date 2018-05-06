@@ -1,34 +1,45 @@
 package mach85
 
-import "github.com/veandco/go-sdl2/sdl"
+import (
+	"time"
+
+	"github.com/veandco/go-sdl2/sdl"
+)
 
 const (
 	width   = 320
 	height  = 200
-	borderW = 403
-	borderH = 284
+	screenW = 403
+	screenH = 284
+	borderW = (screenW - width) / 2
+	borderH = (screenH - height) / 2
 )
 
 const (
-	Black      = 0x000000
-	White      = 0xffffff
-	Red        = 0x880000
-	Cyan       = 0xaaffee
-	Purple     = 0xcc44cc
-	Green      = 0x00cc55
-	Blue       = 0x0000aa
-	Yellow     = 0xeeee77
-	Orange     = 0xdd8855
-	Brown      = 0x664400
-	LightRed   = 0xff7777
-	DarkGray   = 0x333333
-	Gray       = 0x777777
-	LightGreen = 0xaaff66
-	LightBlue  = 0x0088ff
-	LightGray  = 0xbbbbbb
+	AddrBorderColor     = 0xd020
+	AddrBackgroundColor = 0xd021
 )
 
-var colorMap = [...]int{
+const (
+	Black      = 0xff000000
+	White      = 0xffffffff
+	Red        = 0xff880000
+	Cyan       = 0xffaaffee
+	Purple     = 0xffcc44cc
+	Green      = 0xff00cc55
+	Blue       = 0xff0000aa
+	Yellow     = 0xffeeee77
+	Orange     = 0xffdd8855
+	Brown      = 0xff664400
+	LightRed   = 0xffff7777
+	DarkGray   = 0xff333333
+	Gray       = 0xff777777
+	LightGreen = 0xffaaff66
+	LightBlue  = 0xff0088ff
+	LightGray  = 0xffbbbbbb
+)
+
+var colorMap = [...]uint{
 	Black,
 	White,
 	Red,
@@ -48,15 +59,17 @@ var colorMap = [...]int{
 }
 
 type Video struct {
-	window  *sdl.Window
-	surface *sdl.Surface
+	mem        *Memory
+	window     *sdl.Window
+	surface    *sdl.Surface
+	lastUpdate time.Time
 }
 
-func NewVideo() (*Video, error) {
+func NewVideo(mem *Memory) (*Video, error) {
 	window, err := sdl.CreateWindow(
 		"mach85",
 		sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
-		int32(borderW), int32(borderH),
+		int32(screenW), int32(screenH),
 		sdl.WINDOW_SHOWN,
 	)
 	if err != nil {
@@ -67,9 +80,64 @@ func NewVideo() (*Video, error) {
 		return nil, err
 	}
 	return &Video{
+		mem:     mem,
 		window:  window,
 		surface: surface,
 	}, nil
 }
 
-func (v *Video) Service() {}
+func (v *Video) Service() {
+	now := time.Now()
+	if now.Sub(v.lastUpdate) < time.Millisecond*16 {
+		return
+	}
+	v.lastUpdate = now
+	v.drawBorder()
+	v.drawBackground()
+	v.window.UpdateSurface()
+}
+
+func (v *Video) drawBorder() {
+	index := v.mem.Load(AddrBorderColor) & 0xf
+	borderColor := uint32(colorMap[index])
+	topBorder := sdl.Rect{
+		X: 0,
+		Y: 0,
+		W: screenW,
+		H: borderH,
+	}
+	v.surface.FillRect(&topBorder, borderColor)
+	bottomBorder := sdl.Rect{
+		X: 0,
+		Y: borderH + height,
+		W: screenW,
+		H: borderH,
+	}
+	v.surface.FillRect(&bottomBorder, borderColor)
+	leftBorder := sdl.Rect{
+		X: 0,
+		Y: borderH,
+		W: borderW,
+		H: height,
+	}
+	v.surface.FillRect(&leftBorder, borderColor)
+	rightBorder := sdl.Rect{
+		X: borderW + width,
+		Y: borderH,
+		W: borderW,
+		H: height,
+	}
+	v.surface.FillRect(&rightBorder, borderColor)
+}
+
+func (v *Video) drawBackground() {
+	index := v.mem.Load(AddrBackgroundColor) & 0xf
+	backgroundColor := uint32(colorMap[index])
+	background := sdl.Rect{
+		X: borderW,
+		Y: borderH,
+		W: width,
+		H: height,
+	}
+	v.surface.FillRect(&background, backgroundColor)
+}
