@@ -26,9 +26,9 @@ var roms = []struct {
 	address  uint16
 	checksum string
 }{
-	{"basic.rom", 0xa000, "79015323128650c742a3694c9429aa91f355905e"},
-	{"chargen.rom", 0xd000, "adc7c31e18c7c7413d54802ef2f4193da14711aa"},
-	{"kernal.rom", 0xe000, "1d503e56df85a62fee696e7618dc5b4e781df1bb"},
+	{"basic.rom", AddrBasicROM, "79015323128650c742a3694c9429aa91f355905e"},
+	//{"chargen.rom", AddrCharacterROM, "adc7c31e18c7c7413d54802ef2f4193da14711aa"},
+	{"kernal.rom", AddrKernalROM, "1d503e56df85a62fee696e7618dc5b4e781df1bb"},
 }
 
 func New() *Mach85 {
@@ -58,7 +58,7 @@ func (m *Mach85) LoadROM() error {
 		m.Memory.Import(rom.address, data)
 		log.Printf("$%04x: %v\n", rom.address, rom.file)
 	}
-	m.cpu.PC = m.Memory.Load16(ResetVector) - 1
+	m.cpu.PC = m.Memory.Load16(AddrResetVector) - 1
 	return nil
 }
 
@@ -75,15 +75,19 @@ func (m *Mach85) Run() {
 		case <-m.stop:
 			return
 		default:
-			if m.Trace != nil {
-				m.dasm.PC = m.cpu.PC
-				m.Trace(m.dasm.Next())
-			}
-			m.cpu.Next()
+			m.cycle()
 		}
-		for _, d := range m.devices {
-			d.Service()
-		}
+	}
+}
+
+func (m *Mach85) cycle() {
+	if m.Trace != nil {
+		m.dasm.PC = m.cpu.PC
+		m.Trace(m.dasm.Next())
+	}
+	m.cpu.Next()
+	for _, d := range m.devices {
+		d.Service()
 	}
 }
 

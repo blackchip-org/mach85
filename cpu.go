@@ -5,11 +5,6 @@ import (
 	"log"
 )
 
-const (
-	Stack       = uint16(0x0100)
-	ResetVector = uint16(0xfffc)
-)
-
 // CPU is the MOS Technology 6502 processor.
 type CPU struct {
 	PC uint16 // Program counter
@@ -88,7 +83,7 @@ func (c *CPU) fetch16() uint16 {
 }
 
 func (c *CPU) push(value uint8) {
-	c.mem.Store(Stack+uint16(c.SP), value)
+	c.mem.Store(AddrStack+uint16(c.SP), value)
 	c.SP--
 }
 
@@ -99,7 +94,7 @@ func (c *CPU) push16(value uint16) {
 
 func (c *CPU) pull() uint8 {
 	c.SP++
-	return c.mem.Load(Stack + uint16(c.SP))
+	return c.mem.Load(AddrStack + uint16(c.SP))
 }
 
 func (c *CPU) pull16() uint16 {
@@ -108,7 +103,7 @@ func (c *CPU) pull16() uint16 {
 
 func (c *CPU) Reset() {
 	// Vector is actual start address so set the PC one byte behind
-	c.PC = c.mem.Load16(ResetVector) - 1
+	c.PC = c.mem.Load16(AddrResetVector) - 1
 }
 
 func (c *CPU) Next() {

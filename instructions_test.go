@@ -1539,7 +1539,7 @@ func TestJsr(t *testing.T) {
 		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
 	}
 	want = 0x0202
-	have = c.mem.Load16(Stack + 0x100 - 2)
+	have = c.mem.Load16(AddrStack + 0x100 - 2)
 	if want != have {
 		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
 	}
@@ -2111,7 +2111,7 @@ func TestPha(t *testing.T) {
 	c.A = 0x12
 	testRunCPU(c)
 	want := uint8(0x12)
-	have := c.mem.Load(Stack + 0xff)
+	have := c.mem.Load(AddrStack + 0xff)
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
 	}
@@ -2126,7 +2126,7 @@ func TestPhp(t *testing.T) {
 	c.C = true
 	testRunCPU(c)
 	want := flagC | flag5
-	have := c.mem.Load(Stack + 0xff)
+	have := c.mem.Load(AddrStack + 0xff)
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
 	}
@@ -2139,7 +2139,7 @@ func TestPla(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x68)
 	c.SP = 0xfe
-	c.mem.Store(Stack+0xff, 0x12)
+	c.mem.Store(AddrStack+0xff, 0x12)
 	testRunCPU(c)
 	want := uint8(0x12)
 	have := c.A
@@ -2152,7 +2152,7 @@ func TestPlaZero(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x68)
 	c.SP = 0xfe
-	c.mem.Store(Stack+0xff, 0x00)
+	c.mem.Store(AddrStack+0xff, 0x00)
 	testRunCPU(c)
 	want := flagZ | flagB | flag5
 	have := c.SR()
@@ -2165,7 +2165,7 @@ func TestPlaSigned(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x68)
 	c.SP = 0xfe
-	c.mem.Store(Stack+0xff, 0xff)
+	c.mem.Store(AddrStack+0xff, 0xff)
 	testRunCPU(c)
 	want := flagN | flagB | flag5
 	have := c.SR()
@@ -2181,7 +2181,7 @@ func TestPlp(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x28)
 	c.SP = 0xfe
-	c.mem.Store(Stack+0xff, flagC|flagN)
+	c.mem.Store(AddrStack+0xff, flagC|flagN)
 	testRunCPU(c)
 	want := flagC | flagN | flagB | flag5
 	have := c.SR()

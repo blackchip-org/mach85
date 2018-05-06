@@ -107,7 +107,7 @@ func TestPush(t *testing.T) {
 	c.push(0x34)
 	c.push(0x56)
 	want := uint8(0x56)
-	have := c.mem.Load(Stack + 0x100 - 3)
+	have := c.mem.Load(AddrStack + 0x100 - 3)
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
 	}
@@ -119,7 +119,7 @@ func TestPush16(t *testing.T) {
 	c.push(0x12)
 	c.push16(0x3456)
 	want := uint8(0x56)
-	have := c.mem.Load(Stack + 0x100 - 3)
+	have := c.mem.Load(AddrStack + 0x100 - 3)
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
 	}
@@ -132,7 +132,7 @@ func TestPushOverflow(t *testing.T) {
 	c.push(0x34)
 	c.push(0x56)
 	want := uint8(0x56)
-	have := c.mem.Load(Stack + 0x100 - 1)
+	have := c.mem.Load(AddrStack + 0x100 - 1)
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
 	}
@@ -140,7 +140,7 @@ func TestPushOverflow(t *testing.T) {
 
 func TestPull(t *testing.T) {
 	c := NewCPU(NewMemory64k())
-	c.mem.Store(Stack+0xff, 0x12)
+	c.mem.Store(AddrStack+0xff, 0x12)
 	c.SP = 0xfe
 	want := uint8(0x12)
 	have := c.pull()
@@ -151,8 +151,8 @@ func TestPull(t *testing.T) {
 
 func TestPull16(t *testing.T) {
 	c := NewCPU(NewMemory64k())
-	c.mem.Store(Stack+0xfe, 0x34)
-	c.mem.Store(Stack+0xff, 0x12)
+	c.mem.Store(AddrStack+0xfe, 0x34)
+	c.mem.Store(AddrStack+0xff, 0x12)
 	c.SP = 0xfd
 	want := uint16(0x1234)
 	have := c.pull16()

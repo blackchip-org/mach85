@@ -16,11 +16,6 @@ const (
 )
 
 const (
-	AddrBorderColor     = 0xd020
-	AddrBackgroundColor = 0xd021
-)
-
-const (
 	Black      = 0xff000000
 	White      = 0xffffffff
 	Red        = 0xff880000
