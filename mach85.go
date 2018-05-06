@@ -45,7 +45,20 @@ func New() *Mach85 {
 	return m
 }
 
-func (m *Mach85) LoadROM() error {
+func (m *Mach85) Init() error {
+	if err := m.loadROM(); err != nil {
+		log.Fatal(err)
+	}
+	video, err := NewVideo(m.Memory)
+	if err != nil {
+		log.Fatalf("unable to create window: %v", err)
+	}
+	m.AddDevice(video)
+	m.AddDevice(NewHackDevice(m.Memory))
+	return nil
+}
+
+func (m *Mach85) loadROM() error {
 	for _, rom := range roms {
 		data, err := ioutil.ReadFile(rom.file)
 		if err != nil {
@@ -56,7 +69,6 @@ func (m *Mach85) LoadROM() error {
 			return fmt.Errorf("%v: invalid checksum", rom.file)
 		}
 		m.Memory.Import(rom.address, data)
-		log.Printf("$%04x: %v\n", rom.address, rom.file)
 	}
 	m.cpu.PC = m.Memory.Load16(AddrResetVector) - 1
 	return nil

@@ -306,6 +306,7 @@ func (m *Monitor) signalHandler() {
 	signal.Notify(c, os.Interrupt)
 	<-c
 	signal.Reset(os.Interrupt)
+	m.out.Println()
 	m.mach.Stop()
 }
 
