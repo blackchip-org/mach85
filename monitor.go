@@ -24,7 +24,7 @@ const (
 	CmdMemoryShifted       = "M"
 	CmdScreenMemory        = "sm"
 	CmdScreenMemoryShifted = "SM"
-	CmdPoke                = "p"
+	CmdPokePeek            = "p"
 	CmdQuit                = "quit"
 	CmdReset               = "reset"
 	CmdRegisters           = "r"
@@ -111,8 +111,8 @@ func (m *Monitor) parse(line string) {
 		err = m.memory(args, screen.UnshiftedDecoder)
 	case CmdScreenMemoryShifted:
 		err = m.memory(args, screen.ShiftedDecoder)
-	case CmdPoke:
-		err = m.poke(args)
+	case CmdPokePeek:
+		err = m.pokePeek(args)
 	case CmdQuit:
 		m.quit = true
 		return
@@ -221,13 +221,18 @@ func (m *Monitor) memory(args []string, decoder encoding.Decoder) error {
 	return nil
 }
 
-func (m *Monitor) poke(args []string) error {
-	if err := checkLen(args, 2, maxArgs); err != nil {
+func (m *Monitor) pokePeek(args []string) error {
+	if err := checkLen(args, 1, maxArgs); err != nil {
 		return err
 	}
 	address, err := parseAddress(args[0])
 	if err != nil {
 		return err
+	}
+	if len(args) == 1 {
+		v := m.mem.Load(address)
+		m.out.Printf("$%02x +%d\n", v, v)
+		return nil
 	}
 	values := []uint8{}
 	for _, str := range args[1:] {

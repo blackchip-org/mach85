@@ -456,6 +456,19 @@ func TestPokeNotEnoughArguments(t *testing.T) {
 	}
 }
 
+func TestPeek(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.mem.Store(0x0900, 0xab)
+	mon.in = strings.NewReader("p 0900")
+	mon.Run()
+	lines := strings.Split(out.String(), "\n")
+	want := "$ab +171"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
 func TestTrace(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.mach.Memory.StoreN(0x0800,
