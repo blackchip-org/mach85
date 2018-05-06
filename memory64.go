@@ -21,13 +21,13 @@ const (
 	RAM4
 	RAM5
 	RAM6
+	IO
+	Open
 	BasicROM
 	KernalROM
 	CharROM
 	CartLoROM
 	CartHiROM
-	IO
-	Open
 )
 
 var addrZones = [7]uint16{
@@ -153,8 +153,14 @@ func (m *BankedMemory) Load(address uint16) uint8 {
 }
 
 func (m *BankedMemory) Store(address uint16, value uint8) {
-	zones := modes[0]
+	zones := modes[m.Mode()]
 	zone := zoneMap[address>>12]
+	chunkIndex := zones[zone]
+	// If a ROM chunk is mapped in, write the the RAM underneath
+	if chunkIndex >= BasicROM {
+		zones = modes[0]
+		chunkIndex = zones[zone]
+	}
 	chunk := m.Chunks[zones[zone]]
 	chunk.Store(address-addrZones[zone], value)
 }

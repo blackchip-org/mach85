@@ -229,11 +229,13 @@ func (m *Monitor) pokePeek(args []string) error {
 	if err != nil {
 		return err
 	}
+	// peek
 	if len(args) == 1 {
 		v := m.mem.Load(address)
 		m.out.Printf("$%02x +%d\n", v, v)
 		return nil
 	}
+	// poke
 	values := []uint8{}
 	for _, str := range args[1:] {
 		v, err := parseValue(str)

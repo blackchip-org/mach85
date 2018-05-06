@@ -320,22 +320,46 @@ func TestMemoryLoad(t *testing.T) {
 	}
 }
 
-func TestMemoryStore(t *testing.T) {
-	for mode := 0; mode < 32; mode++ {
-		label := fmt.Sprintf("mode %02d", mode)
-		t.Run(label, func(t *testing.T) {
+func TestMemoryStoreRAM(t *testing.T) {
+	mode := 0
+	mem := NewBankedMemory()
+	mem.SetMode(uint8(mode))
+	for address := 2; address <= 0xffff; address++ {
+		mem.Store(uint16(address), uint8(address))
+	}
+	mem.SetMode(0)
+	for address := 2; address <= 0xffff; address++ {
+		have := mem.Load(uint16(address))
+		want := uint8(address)
+		if want != have {
+			t.Fatalf("at %04x \n want: %02x \n have: %02x \n", address, want, have)
+		}
+	}
+}
+
+func TestMemoryStoreThroughROM(t *testing.T) {
+	var tests = []struct {
+		mode    uint8
+		address uint16
+		label   string
+	}{
+		{03, 0x8000, "cart lo"},
+		{03, 0xa000, "cart hi"},
+		{02, 0xd000, "char"},
+		{31, 0xa000, "basic"},
+		{21, 0xe000, "kernal"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.label, func(t *testing.T) {
 			mem := NewBankedMemory()
-			mem.SetMode(uint8(mode))
-			for address := 2; address <= 0xffff; address++ {
-				mem.Store(uint16(address), uint8(address))
-			}
+			mem.SetMode(test.mode)
+			want := uint8(0xab)
+			mem.Store(test.address, want)
 			mem.SetMode(0)
-			for address := 2; address <= 0xffff; address++ {
-				have := mem.Load(uint16(address))
-				want := uint8(address)
-				if want != have {
-					t.Errorf("at %04x \n want: %02x \n have: %02x \n", address, want, have)
-				}
+			have := mem.Load(test.address)
+			if want != have {
+				t.Fatalf("\n want: %02x \n have: %02x \n", want, have)
 			}
 		})
 	}
