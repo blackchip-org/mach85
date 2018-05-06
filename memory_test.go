@@ -3,8 +3,6 @@ package mach85
 import (
 	"strings"
 	"testing"
-
-	"github.com/blackchip-org/mach85/encoding/petscii"
 )
 
 func TestLoad16(t *testing.T) {
@@ -93,7 +91,8 @@ func TestDump(t *testing.T) {
 			for i, value := range test.data() {
 				m.Store(uint16(test.start+i), uint8(value))
 			}
-			have := m.Dump(uint16(test.showFrom), uint16(test.showTo), petscii.UnshiftedDecoder)
+			have := m.Dump(uint16(test.showFrom), uint16(test.showTo),
+				PetsciiUnshiftedDecoder)
 			have = strings.TrimSpace(have)
 			if test.want != have {
 				t.Errorf("\n want: \n%v\n have:\n%v", test.want, have)

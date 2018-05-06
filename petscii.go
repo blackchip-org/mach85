@@ -1,6 +1,6 @@
-package petscii
+package mach85
 
-var unshifted = [...]rune{
+var petsciiUnshifted = [...]rune{
 	0xfffd,
 	0xfffd,
 	0xfffd,
@@ -258,7 +258,7 @@ var unshifted = [...]rune{
 	0x2598,
 	0x03c0,
 }
-var shifted = [...]rune{
+var petsciiShifted = [...]rune{
 	0xfffd,
 	0xfffd,
 	0xfffd,

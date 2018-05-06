@@ -3,23 +3,21 @@ package main
 import (
 	"fmt"
 
-	"github.com/blackchip-org/mach85/encoding"
-	"github.com/blackchip-org/mach85/encoding/petscii"
-	"github.com/blackchip-org/mach85/encoding/screen"
+	"github.com/blackchip-org/mach85"
 )
 
 func main() {
 	fmt.Printf("unshifted\n")
-	printTable(petscii.UnshiftedDecoder)
+	printTable(mach85.PetsciiUnshiftedDecoder)
 	fmt.Printf("\nshifted\n")
-	printTable(petscii.ShiftedDecoder)
+	printTable(mach85.PetsciiShiftedDecoder)
 	fmt.Printf("\nscreen unshifted\n")
-	printTable(screen.UnshiftedDecoder)
+	printTable(mach85.ScreenUnshiftedDecoder)
 	fmt.Printf("\nscreen shifted\n")
-	printTable(screen.ShiftedDecoder)
+	printTable(mach85.ScreenShiftedDecoder)
 }
 
-func printTable(decode encoding.Decoder) {
+func printTable(decode mach85.Decoder) {
 	fmt.Print("    ")
 	for x := 0; x < 0x10; x++ {
 		fmt.Printf("%x ", x)

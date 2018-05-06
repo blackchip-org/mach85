@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -63,19 +64,20 @@ func main() {
 	}
 
 	var out bytes.Buffer
-	out.WriteString("package petscii\n")
-	out.WriteString("var unshifted = [...]rune {\n")
+	out.WriteString("package mach85\n")
+	out.WriteString("var petsciiUnshifted = [...]rune {\n")
 	for _, val := range table[0] {
 		out.WriteString(fmt.Sprintf("0x%04x,\n", val))
 	}
 	out.WriteString("}\n")
-	out.WriteString("var shifted = [...]rune {\n")
+	out.WriteString("var petsciiShifted = [...]rune {\n")
 	for _, val := range table[1] {
 		out.WriteString(fmt.Sprintf("0x%04x,\n", val))
 	}
 	out.WriteString("}\n")
 
-	err = ioutil.WriteFile("tables.go", out.Bytes(), 0644)
+	outfile := filepath.Join("..", "..", "petscii.go")
+	err = ioutil.WriteFile(outfile, out.Bytes(), 0644)
 	if err != nil {
 		panic(err)
 	}

@@ -10,10 +10,6 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
-
-	"github.com/blackchip-org/mach85/encoding"
-	"github.com/blackchip-org/mach85/encoding/petscii"
-	"github.com/blackchip-org/mach85/encoding/screen"
 )
 
 const (
@@ -104,13 +100,13 @@ func (m *Monitor) parse(line string) {
 	case CmdGo:
 		err = m.goCmd(args)
 	case CmdMemory:
-		err = m.memory(args, petscii.UnshiftedDecoder)
+		err = m.memory(args, PetsciiUnshiftedDecoder)
 	case CmdMemoryShifted:
-		err = m.memory(args, petscii.ShiftedDecoder)
+		err = m.memory(args, PetsciiShiftedDecoder)
 	case CmdScreenMemory:
-		err = m.memory(args, screen.UnshiftedDecoder)
+		err = m.memory(args, ScreenUnshiftedDecoder)
 	case CmdScreenMemoryShifted:
-		err = m.memory(args, screen.ShiftedDecoder)
+		err = m.memory(args, ScreenShiftedDecoder)
 	case CmdPokePeek:
 		err = m.pokePeek(args)
 	case CmdQuit:
@@ -191,7 +187,7 @@ func (m *Monitor) disassemble(args []string) error {
 	return nil
 }
 
-func (m *Monitor) memory(args []string, decoder encoding.Decoder) error {
+func (m *Monitor) memory(args []string, decoder Decoder) error {
 	if err := checkLen(args, 0, 2); err != nil {
 		return err
 	}

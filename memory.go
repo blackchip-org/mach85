@@ -3,8 +3,6 @@ package mach85
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/blackchip-org/mach85/encoding"
 )
 
 type MemoryChunk interface {
@@ -56,7 +54,7 @@ func (m *Memory) Import(address uint16, data []uint8) {
 	}
 }
 
-func (m *Memory) Dump(start uint16, end uint16, decode encoding.Decoder) string {
+func (m *Memory) Dump(start uint16, end uint16, decode Decoder) string {
 	var buf bytes.Buffer
 	var chars bytes.Buffer
 

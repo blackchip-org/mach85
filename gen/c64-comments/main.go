@@ -2,11 +2,14 @@
 
 package main
 
+// https://github.com/mist64/c64rom/blob/master/c64rom_en.txt
+
 import (
 	"bufio"
 	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -63,7 +66,8 @@ func main() {
 	for _, c := range comments {
 		source.Comments[c.address] = c.text
 	}
-	out, err := os.Create("../../cmd/mach85/c64rom_en.source")
+	outfile := filepath.Join("..", "..", "rom", "c64rom_en.source")
+	out, err := os.Create(outfile)
 	if err != nil {
 		log.Fatal(err)
 	}
