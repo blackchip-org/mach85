@@ -207,7 +207,7 @@ func TestDisassembler(t *testing.T) {
 	for _, test := range disassemblerTests {
 		testName := fmt.Sprintf("opcode $%02x", test.bytes[0])
 		t.Run(testName, func(t *testing.T) {
-			mem := NewMemory64k()
+			mem := NewMemory(NewRAM(0x10000))
 			mem.StoreN(0x1234, test.bytes...)
 			d := NewDisassembler(mem)
 			d.PC = 0x1233

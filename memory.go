@@ -6,29 +6,24 @@ import (
 )
 
 type MemoryChunk interface {
-	Initializer
 	Load(address uint16) uint8
 	Store(address uint16, value uint8)
 }
 
 type Memory struct {
-	chunk MemoryChunk
+	Base MemoryChunk
 }
 
-func NewMemory(chunk MemoryChunk) *Memory {
-	return &Memory{chunk: chunk}
+func NewMemory(base MemoryChunk) *Memory {
+	return &Memory{Base: base}
 }
 
 func (m *Memory) Load(address uint16) uint8 {
-	return m.chunk.Load(address)
+	return m.Base.Load(address)
 }
 
 func (m *Memory) Store(address uint16, value uint8) {
-	m.chunk.Store(address, value)
-}
-
-func (m *Memory) Init() error {
-	return m.chunk.Init()
+	m.Base.Store(address, value)
 }
 
 func (m *Memory) StoreN(address uint16, values ...uint8) {
@@ -113,14 +108,6 @@ func (r *RAM) Store(address uint16, value uint8) {
 	r.bytes[address] = value
 }
 
-func (r *RAM) Init() error {
-	return nil
-}
-
-func NewMemory64k() *Memory {
-	return NewMemory(NewRAM(0x10000))
-}
-
 type ROM struct {
 	bytes []uint8
 }
@@ -138,10 +125,6 @@ func (r *ROM) Load(address uint16) uint8 {
 func (r *ROM) Store(address uint16, value uint8) {
 }
 
-func (r *ROM) Init() error {
-	return nil
-}
-
 type NullMemory struct {
 	Value uint8
 }
@@ -151,8 +134,4 @@ func (m NullMemory) Load(address uint16) uint8 {
 }
 
 func (m NullMemory) Store(address uint16, value uint8) {
-}
-
-func (m NullMemory) Init() error {
-	return nil
 }

@@ -96,14 +96,14 @@ var modes = [32]zones{
 	/* 31 */ zones{RAM0, RAM1, RAM2, BasicROM, RAM4, IO, KernalROM},
 }
 
-type BankedMemory struct {
+type Memory64 struct {
 	Chunks [14]MemoryChunk
 	Game   bool // pin 8
 	ExROM  bool // pin 9
 }
 
-func NewBankedMemory() *BankedMemory {
-	m := &BankedMemory{}
+func NewMemory64() *Memory64 {
+	m := &Memory64{}
 
 	m.Chunks[RAM0] = NewRAM(0x1000) // $0000 - $0fff
 	m.Chunks[RAM1] = NewRAM(0x7000) // $1000 - $7fff
@@ -126,7 +126,7 @@ func NewBankedMemory() *BankedMemory {
 	return m
 }
 
-func (m *BankedMemory) Mode() uint8 {
+func (m *Memory64) Mode() uint8 {
 	mode := m.Chunks[RAM0].Load(AddrR6510) & 0x7 // bits 0 - 2
 	if m.Game {
 		mode |= 0x8 // bit 3
@@ -137,7 +137,7 @@ func (m *BankedMemory) Mode() uint8 {
 	return mode
 }
 
-func (m *BankedMemory) SetMode(value uint8) {
+func (m *Memory64) SetMode(value uint8) {
 	prev := m.Chunks[RAM0].Load(AddrR6510)
 	next := prev&0xf8 + value&0x07 // bits 0 - 2
 	m.Chunks[RAM0].Store(AddrR6510, next)
@@ -145,14 +145,14 @@ func (m *BankedMemory) SetMode(value uint8) {
 	m.ExROM = value&0x10 > 0 // bit 4
 }
 
-func (m *BankedMemory) Load(address uint16) uint8 {
+func (m *Memory64) Load(address uint16) uint8 {
 	zones := modes[m.Mode()]
 	zone := zoneMap[address>>12]
 	chunk := m.Chunks[zones[zone]]
 	return chunk.Load(address - addrZones[zone])
 }
 
-func (m *BankedMemory) Store(address uint16, value uint8) {
+func (m *Memory64) Store(address uint16, value uint8) {
 	zones := modes[m.Mode()]
 	zone := zoneMap[address>>12]
 	chunkIndex := zones[zone]
@@ -175,7 +175,7 @@ var roms = []struct {
 	{"kernal.rom", KernalROM, "1d503e56df85a62fee696e7618dc5b4e781df1bb"},
 }
 
-func (m *BankedMemory) Init() error {
+func (m *Memory64) Init() error {
 	for _, r := range roms {
 		file := filepath.Join(rom.Path, r.file)
 		data, err := ioutil.ReadFile(file)

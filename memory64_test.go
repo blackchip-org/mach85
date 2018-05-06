@@ -296,7 +296,7 @@ func TestMemoryLoad(t *testing.T) {
 	for _, test := range tests {
 		label := fmt.Sprintf("mode %02d address %04x", test.mode, test.address)
 		t.Run(label, func(t *testing.T) {
-			mem := NewBankedMemory()
+			mem := NewMemory64()
 			mem.Chunks[RAM0].Store(0x40, ram0)
 			mem.Chunks[RAM1].Store(0x40, ram1)
 			mem.Chunks[RAM2].Store(0x40, ram2)
@@ -322,7 +322,7 @@ func TestMemoryLoad(t *testing.T) {
 
 func TestMemoryStoreRAM(t *testing.T) {
 	mode := 0
-	mem := NewBankedMemory()
+	mem := NewMemory64()
 	mem.SetMode(uint8(mode))
 	for address := 2; address <= 0xffff; address++ {
 		mem.Store(uint16(address), uint8(address))
@@ -352,7 +352,7 @@ func TestMemoryStoreThroughROM(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.label, func(t *testing.T) {
-			mem := NewBankedMemory()
+			mem := NewMemory64()
 			mem.SetMode(test.mode)
 			want := uint8(0xab)
 			mem.Store(test.address, want)

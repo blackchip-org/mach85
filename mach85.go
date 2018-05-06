@@ -8,10 +8,6 @@ type Device interface {
 	Service()
 }
 
-type Initializer interface {
-	Init() error
-}
-
 type Mach85 struct {
 	Trace       func(op Operation)
 	Breakpoints map[uint16]bool
@@ -23,7 +19,7 @@ type Mach85 struct {
 }
 
 func New() *Mach85 {
-	mem := NewMemory(NewBankedMemory())
+	mem := NewMemory(NewMemory64())
 	cpu := NewCPU(mem)
 	m := &Mach85{
 		Memory:      mem,
@@ -37,7 +33,8 @@ func New() *Mach85 {
 }
 
 func (m *Mach85) Init() error {
-	if err := m.Memory.Init(); err != nil {
+	mem64 := m.Memory.Base.(*Memory64)
+	if err := mem64.Init(); err != nil {
 		log.Fatal(err)
 	}
 	video, err := NewVideo(m.Memory)
