@@ -9,5 +9,5 @@ before_install:
   - docker pull blackchip/mach85
 
 script:
-  - docker run --mount type=bind,source="$(pwd)",target=/root/go/src/github.com/blackchip-org/mach85 blackchip/mach85 /bin/bash -c "cd /root/go/src/github.com/blackchip-org/mach85 ; go test -v"
+  - docker run --mount type=bind,source="$(pwd)",target=/root/go/src/github.com/blackchip-org/mach85 blackchip/mach85 /bin/bash -c "cd /root/go/src/github.com/blackchip-org/mach85 ; go test -v ./..."
 

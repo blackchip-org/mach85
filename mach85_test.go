@@ -3,6 +3,7 @@ package mach85
 import (
 	"testing"
 
+	"github.com/blackchip-org/mach85/rom"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -13,7 +14,7 @@ func BenchmarkMach(b *testing.B) {
 	defer sdl.Quit()
 	sdl.GLSetSwapInterval(1)
 	mach := New()
-	mach.ROMPath = "rom"
+	rom.Path = "rom"
 	if err := mach.Init(); err != nil {
 		b.Fatalf("unable to initialize: %v", err)
 	}

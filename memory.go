@@ -7,27 +7,30 @@ import (
 	"github.com/blackchip-org/mach85/encoding"
 )
 
+type MemoryChunk interface {
+	Initializer
+	Load(address uint16) uint8
+	Store(address uint16, value uint8)
+}
+
 type Memory struct {
-	bytes []uint8
+	chunk MemoryChunk
 }
 
-func NewMemory(size int) *Memory {
-	m := &Memory{
-		bytes: make([]uint8, size, size),
-	}
-	return m
-}
-
-func NewMemory64k() *Memory {
-	return NewMemory(0x10000)
+func NewMemory(chunk MemoryChunk) *Memory {
+	return &Memory{chunk: chunk}
 }
 
 func (m *Memory) Load(address uint16) uint8 {
-	return m.bytes[address]
+	return m.chunk.Load(address)
 }
 
 func (m *Memory) Store(address uint16, value uint8) {
-	m.bytes[address] = value
+	m.chunk.Store(address, value)
+}
+
+func (m *Memory) Init() error {
+	return m.chunk.Init()
 }
 
 func (m *Memory) StoreN(address uint16, values ...uint8) {
@@ -91,4 +94,67 @@ func (m *Memory) Dump(start uint16, end uint16, decode encoding.Decoder) string 
 		}
 	}
 	return buf.String()
+}
+
+type RAM struct {
+	bytes []uint8
+}
+
+func NewRAM(size int) *RAM {
+	r := &RAM{
+		bytes: make([]uint8, size, size),
+	}
+	return r
+}
+
+func (r *RAM) Load(address uint16) uint8 {
+	return r.bytes[address]
+}
+
+func (r *RAM) Store(address uint16, value uint8) {
+	r.bytes[address] = value
+}
+
+func (r *RAM) Init() error {
+	return nil
+}
+
+func NewMemory64k() *Memory {
+	return NewMemory(NewRAM(0x10000))
+}
+
+type ROM struct {
+	bytes []uint8
+}
+
+func NewROM(bytes []uint8) *ROM {
+	return &ROM{
+		bytes: bytes,
+	}
+}
+
+func (r *ROM) Load(address uint16) uint8 {
+	return r.bytes[address]
+}
+
+func (r *ROM) Store(address uint16, value uint8) {
+}
+
+func (r *ROM) Init() error {
+	return nil
+}
+
+type NullMemory struct {
+	Value uint8
+}
+
+func (m NullMemory) Load(address uint16) uint8 {
+	return m.Value
+}
+
+func (m NullMemory) Store(address uint16, value uint8) {
+}
+
+func (m NullMemory) Init() error {
+	return nil
 }
