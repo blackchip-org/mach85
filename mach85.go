@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 )
 
 type Mach85 struct {
 	Trace       func(op Operation)
 	Breakpoints map[uint16]bool
 	Memory      *Memory
+	ROMPath     string
 	cpu         *CPU
 	devices     []Device
 	dasm        *Disassembler
@@ -60,7 +62,8 @@ func (m *Mach85) Init() error {
 
 func (m *Mach85) loadROM() error {
 	for _, rom := range roms {
-		data, err := ioutil.ReadFile(rom.file)
+		file := filepath.Join(m.ROMPath, rom.file)
+		data, err := ioutil.ReadFile(file)
 		if err != nil {
 			return err
 		}

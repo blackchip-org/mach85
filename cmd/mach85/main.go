@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/blackchip-org/mach85"
 	"github.com/veandco/go-sdl2/sdl"
@@ -19,11 +20,12 @@ func main() {
 	sdl.GLSetSwapInterval(1)
 
 	mach := mach85.New()
+	mach.ROMPath = filepath.Join("..", "..", "rom")
 	if err := mach.Init(); err != nil {
 		log.Fatalf("unable to initialize: %v", err)
 	}
 	mon := mach85.NewMonitor(mach)
-	in, err := os.Open("c64rom_en.source")
+	in, err := os.Open(filepath.Join(mach.ROMPath, "c64rom_en.source"))
 	if err != nil {
 		log.Fatal(err)
 	}
