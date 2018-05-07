@@ -20,7 +20,7 @@ type Mach85 struct {
 
 func New() *Mach85 {
 	mem := NewMemory(NewMemory64())
-	cpu := NewCPU(mem)
+	cpu := New6510(mem)
 	m := &Mach85{
 		Memory:      mem,
 		cpu:         cpu,

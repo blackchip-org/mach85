@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-// CPU is the MOS Technology 6502 processor.
+// CPU is the MOS Technology 6502 series processor.
 type CPU struct {
 	PC uint16 // Program counter
 	A  uint8  // Accumulator
@@ -24,7 +24,7 @@ type CPU struct {
 	mem *Memory
 }
 
-func NewCPU(mem *Memory) *CPU {
+func New6510(mem *Memory) *CPU {
 	return &CPU{
 		mem: mem,
 	}

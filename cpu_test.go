@@ -10,7 +10,7 @@ import (
 
 func newTestCPU() *CPU {
 	mem := NewMemory(NewRAM(0x10000))
-	c := NewCPU(mem)
+	c := New6510(mem)
 	c.SP = 0xff
 	c.PC = 0x1ff
 	return c
@@ -92,7 +92,7 @@ var cpuStringTests = []struct {
 
 func TestCPUString(t *testing.T) {
 	for _, test := range cpuStringTests {
-		c := NewCPU(NewMemory(NewRAM(0x10000)))
+		c := New6510(NewMemory(NewRAM(0x10000)))
 		test.setup(c)
 		have := c.String()
 		if test.want != have {
@@ -101,7 +101,7 @@ func TestCPUString(t *testing.T) {
 	}
 }
 func TestPush(t *testing.T) {
-	c := NewCPU(NewMemory(NewRAM(0x10000)))
+	c := New6510(NewMemory(NewRAM(0x10000)))
 	c.SP = 0xff
 	c.push(0x12)
 	c.push(0x34)
@@ -114,7 +114,7 @@ func TestPush(t *testing.T) {
 }
 
 func TestPush16(t *testing.T) {
-	c := NewCPU(NewMemory(NewRAM(0x10000)))
+	c := New6510(NewMemory(NewRAM(0x10000)))
 	c.SP = 0xff
 	c.push(0x12)
 	c.push16(0x3456)
@@ -126,7 +126,7 @@ func TestPush16(t *testing.T) {
 }
 
 func TestPushOverflow(t *testing.T) {
-	c := NewCPU(NewMemory(NewRAM(0x10000)))
+	c := New6510(NewMemory(NewRAM(0x10000)))
 	c.SP = 0x01
 	c.push(0x12)
 	c.push(0x34)
@@ -139,7 +139,7 @@ func TestPushOverflow(t *testing.T) {
 }
 
 func TestPull(t *testing.T) {
-	c := NewCPU(NewMemory(NewRAM(0x10000)))
+	c := New6510(NewMemory(NewRAM(0x10000)))
 	c.mem.Store(AddrStack+0xff, 0x12)
 	c.SP = 0xfe
 	want := uint8(0x12)
@@ -150,7 +150,7 @@ func TestPull(t *testing.T) {
 }
 
 func TestPull16(t *testing.T) {
-	c := NewCPU(NewMemory(NewRAM(0x10000)))
+	c := New6510(NewMemory(NewRAM(0x10000)))
 	c.mem.Store(AddrStack+0xfe, 0x34)
 	c.mem.Store(AddrStack+0xff, 0x12)
 	c.SP = 0xfd
