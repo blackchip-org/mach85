@@ -127,7 +127,7 @@ func NewMemory64() *Memory64 {
 }
 
 func (m *Memory64) Mode() uint8 {
-	mode := m.Chunks[RAM0].Load(AddrR6510) & 0x7 // bits 0 - 2
+	mode := m.Chunks[RAM0].Load(AddrProcessorPort) & 0x7 // bits 0 - 2
 	if m.Game {
 		mode |= 0x8 // bit 3
 	}
@@ -137,12 +137,13 @@ func (m *Memory64) Mode() uint8 {
 	return mode
 }
 
-func (m *Memory64) SetMode(value uint8) {
-	prev := m.Chunks[RAM0].Load(AddrR6510)
+func (m *Memory64) SetMode(value uint8) uint8 {
+	prev := m.Mode()
 	next := prev&0xf8 + value&0x07 // bits 0 - 2
-	m.Chunks[RAM0].Store(AddrR6510, next)
+	m.Chunks[RAM0].Store(AddrProcessorPort, next)
 	m.Game = value&0x08 > 0  // bit 3
 	m.ExROM = value&0x10 > 0 // bit 4
+	return prev
 }
 
 func (m *Memory64) Load(address uint16) uint8 {

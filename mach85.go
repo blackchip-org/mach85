@@ -5,7 +5,7 @@ import (
 )
 
 type Device interface {
-	Service()
+	Service() error
 }
 
 type Mach85 struct {
@@ -42,7 +42,6 @@ func (m *Mach85) Init() error {
 		log.Fatalf("unable to create window: %v", err)
 	}
 	m.AddDevice(video)
-	m.AddDevice(NewHackDevice(m.Memory))
 	m.cpu.PC = m.Memory.Load16(AddrResetVector) - 1
 	return nil
 }

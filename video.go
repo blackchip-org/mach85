@@ -1,5 +1,8 @@
 package mach85
 
+// http://dustlayer.com/index-vic-ii/
+// http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt
+
 import (
 	"image/color"
 	"time"
@@ -8,12 +11,14 @@ import (
 )
 
 const (
-	width   = 320
-	height  = 200
-	screenW = 404 // actually 403?
-	screenH = 284
-	borderW = (screenW - width) / 2
-	borderH = (screenH - height) / 2
+	width      = 320
+	height     = 200
+	screenW    = 404 // actually 403?
+	screenH    = 284
+	borderW    = (screenW - width) / 2
+	borderH    = (screenH - height) / 2
+	charSheetW = 32
+	charSheetH = 16
 )
 
 var (
@@ -59,6 +64,7 @@ type Video struct {
 	window     *sdl.Window
 	renderer   *sdl.Renderer
 	lastUpdate time.Time
+	charSheet  *sdl.Texture
 }
 
 func NewVideo(mem *Memory) (*Video, error) {
@@ -82,15 +88,23 @@ func NewVideo(mem *Memory) (*Video, error) {
 	}, nil
 }
 
-func (v *Video) Service() {
+func (v *Video) Service() error {
 	now := time.Now()
 	if now.Sub(v.lastUpdate) < time.Millisecond*16 {
-		return
+		return nil
 	}
 	v.lastUpdate = now
+	v.mem.Store(0xd012, 00) // HACK: set raster line to zero
+	if v.charSheet == nil {
+		if err := v.genCharSheet(); err != nil {
+			return err
+		}
+	}
 	v.drawBorder()
 	v.drawBackground()
+	v.drawCharacters()
 	v.renderer.Present()
+	return nil
 }
 
 func (v *Video) drawBorder() {
@@ -140,9 +154,61 @@ func (v *Video) drawBackground() {
 	v.renderer.FillRect(&background)
 }
 
-func CharGen(renderer *sdl.Renderer, chargen *ROM) (*sdl.Texture, error) {
-	w := 32 * 8
-	h := 16 * 8
+func (v *Video) drawCharacters() {
+	mem64 := v.mem.Base.(*Memory64)
+	prev := mem64.SetMode(0)
+	defer mem64.SetMode(prev)
+
+	io := mem64.Chunks[IO]
+	addrScreenMem := uint16(0x0400)
+	addrColorMem := uint16(0x0800)
+	baseX := 0
+	baseY := 0
+	/*
+		if mem64.Load(addrScreenMem) == 0 {
+			return
+		}
+	*/
+	for baseY < height {
+		ch := mem64.Load(addrScreenMem)
+		color := colorMap[io.Load(addrColorMem)&0x0f]
+		v.charSheet.SetColorMod(color.R, color.G, color.B)
+		chx := int32(ch) % charSheetW * 8
+		chy := int32(ch) / charSheetW * 8
+		src := sdl.Rect{X: chx, Y: chy, W: 8, H: 8}
+		dest := sdl.Rect{
+			X: int32(baseX + borderW),
+			Y: int32(baseY + borderH),
+			W: 8,
+			H: 8,
+		}
+		v.renderer.Copy(v.charSheet, &src, &dest)
+		//fmt.Printf("ch %2d; chx: %2d; chy %2d\n", ch, chx, chy)
+		addrScreenMem++
+		addrColorMem++
+		baseX += 8
+		if baseX >= width {
+			baseX = 0
+			baseY += 8
+		}
+	}
+	//os.Exit(0)
+}
+
+func (v *Video) genCharSheet() error {
+	mem64 := v.mem.Base.(*Memory64)
+	chargen := mem64.Chunks[CharROM]
+	charSheet, err := CharGen(v.renderer, chargen)
+	if err != nil {
+		return err
+	}
+	v.charSheet = charSheet
+	return nil
+}
+
+func CharGen(renderer *sdl.Renderer, chargen MemoryChunk) (*sdl.Texture, error) {
+	w := charSheetW * 8
+	h := charSheetH * 8
 	t, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888,
 		sdl.TEXTUREACCESS_TARGET, int32(w), int32(h))
 	if err != nil {
