@@ -4,11 +4,18 @@ package mach85
 // http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt
 
 import (
+	"flag"
 	"image/color"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
+
+var scale int
+
+func init() {
+	flag.IntVar(&scale, "video-scale", 2, "scale video screen size")
+}
 
 const (
 	width      = 320
@@ -71,7 +78,7 @@ func NewVideo(mem *Memory) (*Video, error) {
 	window, err := sdl.CreateWindow(
 		"mach85",
 		sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
-		int32(screenW), int32(screenH),
+		int32(screenW*scale), int32(screenH*scale),
 		sdl.WINDOW_SHOWN,
 	)
 	if err != nil {
@@ -81,6 +88,7 @@ func NewVideo(mem *Memory) (*Video, error) {
 	if err != nil {
 		return nil, err
 	}
+	renderer.SetScale(float32(scale), float32(scale))
 	return &Video{
 		mem:      mem,
 		window:   window,
@@ -164,11 +172,6 @@ func (v *Video) drawCharacters() {
 	addrColorMem := uint16(0x0800)
 	baseX := 0
 	baseY := 0
-	/*
-		if mem64.Load(addrScreenMem) == 0 {
-			return
-		}
-	*/
 	for baseY < height {
 		ch := mem64.Load(addrScreenMem)
 		color := colorMap[io.Load(addrColorMem)&0x0f]
@@ -183,7 +186,6 @@ func (v *Video) drawCharacters() {
 			H: 8,
 		}
 		v.renderer.Copy(v.charSheet, &src, &dest)
-		//fmt.Printf("ch %2d; chx: %2d; chy %2d\n", ch, chx, chy)
 		addrScreenMem++
 		addrColorMem++
 		baseX += 8
@@ -192,7 +194,6 @@ func (v *Video) drawCharacters() {
 			baseY += 8
 		}
 	}
-	//os.Exit(0)
 }
 
 func (v *Video) genCharSheet() error {
