@@ -42,34 +42,19 @@ func main() {
 		log.Fatalf("unable to initialize renderer: %v", err)
 	}
 
-	clear := sdl.Rect{X: 0, Y: 0, W: int32(w * scale), H: int32(h * scale)}
-	renderer.SetScale(float32(scale), float32(scale))
-	renderer.SetDrawColorArray(mach85.Blue...)
-	renderer.FillRect(&clear)
-
-	renderer.SetDrawColorArray(mach85.LightBlue...)
-	baseX := 0
-	baseY := 0
-	addr := uint16(0)
-	for baseY < h {
-		for y := baseY; y < baseY+8; y++ {
-			line := chargen.Load(addr)
-			addr++
-			for x := baseX; x < baseX+8; x++ {
-				bit := line & 0x80
-				line = line << 1
-				if bit != 0 {
-					renderer.DrawPoint(int32(x), int32(y))
-				}
-			}
-		}
-		baseX += 8
-		if baseX >= w {
-			baseX = 0
-			baseY += 8
-		}
+	sheet, err := mach85.CharGen(renderer, chargen)
+	if err != nil {
+		log.Fatalf("unable to render characters: %v", err)
 	}
 
+	clear := sdl.Rect{X: 0, Y: 0, W: int32(w * scale), H: int32(h * scale)}
+	color := mach85.Blue
+	renderer.SetDrawColor(color.R, color.G, color.B, color.A)
+	renderer.FillRect(&clear)
+
+	color = mach85.LightBlue
+	sheet.SetColorMod(color.R, color.G, color.B)
+	renderer.Copy(sheet, nil, nil)
 	renderer.Present()
 
 	run := true
@@ -81,4 +66,5 @@ func main() {
 			}
 		}
 	}
+
 }

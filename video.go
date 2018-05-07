@@ -1,6 +1,7 @@
 package mach85
 
 import (
+	"image/color"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -16,25 +17,25 @@ const (
 )
 
 var (
-	Black      = []uint8{0x00, 0x00, 0x00, 0xff}
-	White      = []uint8{0xff, 0xff, 0xff, 0xff}
-	Red        = []uint8{0x88, 0x00, 0x00, 0xff}
-	Cyan       = []uint8{0xaa, 0xff, 0xee, 0xff}
-	Purple     = []uint8{0xcc, 0x44, 0xcc, 0xff}
-	Green      = []uint8{0x00, 0xcc, 0x55, 0xff}
-	Blue       = []uint8{0x00, 0x00, 0xaa, 0xff}
-	Yellow     = []uint8{0xee, 0xee, 0x77, 0xff}
-	Orange     = []uint8{0xdd, 0x88, 0x55, 0xff}
-	Brown      = []uint8{0x66, 0x44, 0x00, 0xff}
-	LightRed   = []uint8{0xff, 0x77, 0x77, 0xff}
-	DarkGray   = []uint8{0x33, 0x33, 0x33, 0xff}
-	Gray       = []uint8{0x77, 0x77, 0x77, 0xff}
-	LightGreen = []uint8{0xaa, 0xff, 0x66, 0xff}
-	LightBlue  = []uint8{0x00, 0x88, 0xff, 0xff}
-	LightGray  = []uint8{0xbb, 0xbb, 0xbb, 0xff}
+	Black      = color.RGBA{0x00, 0x00, 0x00, 0xff}
+	White      = color.RGBA{0xff, 0xff, 0xff, 0xff}
+	Red        = color.RGBA{0x88, 0x00, 0x00, 0xff}
+	Cyan       = color.RGBA{0xaa, 0xff, 0xee, 0xff}
+	Purple     = color.RGBA{0xcc, 0x44, 0xcc, 0xff}
+	Green      = color.RGBA{0x00, 0xcc, 0x55, 0xff}
+	Blue       = color.RGBA{0x00, 0x00, 0xaa, 0xff}
+	Yellow     = color.RGBA{0xee, 0xee, 0x77, 0xff}
+	Orange     = color.RGBA{0xdd, 0x88, 0x55, 0xff}
+	Brown      = color.RGBA{0x66, 0x44, 0x00, 0xff}
+	LightRed   = color.RGBA{0xff, 0x77, 0x77, 0xff}
+	DarkGray   = color.RGBA{0x33, 0x33, 0x33, 0xff}
+	Gray       = color.RGBA{0x77, 0x77, 0x77, 0xff}
+	LightGreen = color.RGBA{0xaa, 0xff, 0x66, 0xff}
+	LightBlue  = color.RGBA{0x00, 0x88, 0xff, 0xff}
+	LightGray  = color.RGBA{0xbb, 0xbb, 0xbb, 0xff}
 )
 
-var colorMap = [...][]uint8{
+var colorMap = [...]color.RGBA{
 	Black,
 	White,
 	Red,
@@ -94,8 +95,8 @@ func (v *Video) Service() {
 
 func (v *Video) drawBorder() {
 	index := v.mem.Load(AddrBorderColor) & 0xf
-	borderColor := []uint8(colorMap[index])
-	v.renderer.SetDrawColorArray(borderColor...)
+	c := colorMap[index]
+	v.renderer.SetDrawColor(c.R, c.G, c.B, c.A)
 	topBorder := sdl.Rect{
 		X: 0,
 		Y: 0,
@@ -128,8 +129,8 @@ func (v *Video) drawBorder() {
 
 func (v *Video) drawBackground() {
 	index := v.mem.Load(AddrBackgroundColor) & 0xf
-	backgroundColor := []uint8(colorMap[index])
-	v.renderer.SetDrawColorArray(backgroundColor...)
+	c := colorMap[index]
+	v.renderer.SetDrawColor(c.R, c.G, c.B, c.A)
 	background := sdl.Rect{
 		X: borderW,
 		Y: borderH,
@@ -137,4 +138,45 @@ func (v *Video) drawBackground() {
 		H: height,
 	}
 	v.renderer.FillRect(&background)
+}
+
+func CharGen(renderer *sdl.Renderer, chargen *ROM) (*sdl.Texture, error) {
+	w := 32 * 8
+	h := 16 * 8
+	t, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888,
+		sdl.TEXTUREACCESS_TARGET, int32(w), int32(h))
+	if err != nil {
+		return nil, err
+	}
+	renderer.SetRenderTarget(t)
+
+	clear := sdl.Rect{X: 0, Y: 0, W: int32(w), H: int32(h)}
+	renderer.SetDrawColor(0x00, 0x00, 0x00, 0x00)
+	renderer.FillRect(&clear)
+
+	renderer.SetDrawColorArray(0xff, 0xff, 0xff, 0xff)
+	baseX := 0
+	baseY := 0
+	addr := uint16(0)
+	for baseY < h {
+		for y := baseY; y < baseY+8; y++ {
+			line := chargen.Load(addr)
+			addr++
+			for x := baseX; x < baseX+8; x++ {
+				bit := line & 0x80
+				line = line << 1
+				if bit != 0 {
+					renderer.DrawPoint(int32(x), int32(y))
+				}
+			}
+		}
+		baseX += 8
+		if baseX >= w {
+			baseX = 0
+			baseY += 8
+		}
+	}
+	t.SetBlendMode(sdl.BLENDMODE_BLEND)
+	renderer.SetRenderTarget(nil)
+	return t, nil
 }
