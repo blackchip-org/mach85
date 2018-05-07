@@ -149,11 +149,6 @@ func CharGen(renderer *sdl.Renderer, chargen *ROM) (*sdl.Texture, error) {
 		return nil, err
 	}
 	renderer.SetRenderTarget(t)
-
-	clear := sdl.Rect{X: 0, Y: 0, W: int32(w), H: int32(h)}
-	renderer.SetDrawColor(0x00, 0x00, 0x00, 0x00)
-	renderer.FillRect(&clear)
-
 	renderer.SetDrawColorArray(0xff, 0xff, 0xff, 0xff)
 	baseX := 0
 	baseY := 0
