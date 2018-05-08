@@ -89,11 +89,13 @@ func NewVideo(mem *Memory) (*Video, error) {
 		return nil, err
 	}
 	renderer.SetScale(float32(scale), float32(scale))
-	return &Video{
+	v := &Video{
 		mem:      mem,
 		window:   window,
 		renderer: renderer,
-	}, nil
+	}
+	v.Service()
+	return v, nil
 }
 
 func (v *Video) Service() error {
