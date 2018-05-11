@@ -109,20 +109,6 @@ func (c *CPU) Reset() {
 }
 
 func (c *CPU) Next() {
-	interrupt := false
-	select {
-	case <-c.irq:
-		if !c.I {
-			interrupt = true
-		}
-	default:
-	}
-
-	if interrupt {
-		c.push16(c.PC)
-		c.push(c.SR())
-		c.PC = AddrISR - 1
-	}
 
 	opcode := c.fetch()
 	execute, ok := executors[opcode]
@@ -130,6 +116,15 @@ func (c *CPU) Next() {
 		log.Printf("$%04x: illegal opcode: $%02x", c.PC, opcode)
 	} else {
 		execute(c)
+	}
+	select {
+	case <-c.irq:
+		if !c.I {
+			c.push16(c.PC)
+			c.push(c.SR())
+			c.PC = AddrISR - 1
+		}
+	default:
 	}
 }
 

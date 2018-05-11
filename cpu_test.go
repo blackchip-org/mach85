@@ -163,8 +163,10 @@ func TestPull16(t *testing.T) {
 
 func TestIRQ(t *testing.T) {
 	c := newTestCPU()
-	c.mem.StoreN(AddrISR, 0xa9, 0x12)
+	c.mem.Store(0x0200, 0xea)         // nop
+	c.mem.StoreN(AddrISR, 0xa9, 0x12) // lda #12
 	c.IRQ()
+	c.Next()
 	c.Next()
 	want := uint8(0x12)
 	have := c.A

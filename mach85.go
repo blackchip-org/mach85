@@ -2,6 +2,7 @@ package mach85
 
 import (
 	"log"
+	"time"
 )
 
 type Device interface {
@@ -42,6 +43,7 @@ func (m *Mach85) Init() error {
 		log.Fatalf("unable to create window: %v", err)
 	}
 	m.AddDevice(video)
+	m.AddDevice(NewJiffyClock(m.cpu))
 	m.cpu.PC = m.Memory.Load16(AddrResetVector) - 1
 	return nil
 }
@@ -86,4 +88,25 @@ func (m *Mach85) Reset() {
 
 func (m *Mach85) AddDevice(d Device) {
 	m.devices = append(m.devices, d)
+}
+
+// https://www.c64-wiki.com/wiki/Jiffy_Clock
+
+type JiffyClock struct {
+	lastUpdate time.Time
+	cpu        *CPU
+}
+
+func NewJiffyClock(cpu *CPU) *JiffyClock {
+	return &JiffyClock{cpu: cpu}
+}
+
+func (c *JiffyClock) Service() error {
+	now := time.Now()
+	if now.Sub(c.lastUpdate) < 16800000 { // 16.8 ms
+		return nil
+	}
+	c.lastUpdate = now
+	c.cpu.IRQ()
+	return nil
 }
