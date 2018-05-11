@@ -8,4 +8,5 @@ const (
 	AddrBorderColor     = uint16(0xd020)
 	AddrBackgroundColor = uint16(0xd021)
 	AddrResetVector     = uint16(0xfffc)
+	AddrISR             = uint16(0xff48)
 )

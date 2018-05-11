@@ -22,11 +22,13 @@ type CPU struct {
 	N bool // Signed flag
 
 	mem *Memory
+	irq chan bool
 }
 
 func New6510(mem *Memory) *CPU {
 	return &CPU{
 		mem: mem,
+		irq: make(chan bool, 10),
 	}
 }
 
@@ -107,6 +109,21 @@ func (c *CPU) Reset() {
 }
 
 func (c *CPU) Next() {
+	interrupt := false
+	select {
+	case <-c.irq:
+		if !c.I {
+			interrupt = true
+		}
+	default:
+	}
+
+	if interrupt {
+		c.push16(c.PC)
+		c.push(c.SR())
+		c.PC = AddrISR - 1
+	}
+
 	opcode := c.fetch()
 	execute, ok := executors[opcode]
 	if !ok {
@@ -114,6 +131,10 @@ func (c *CPU) Next() {
 	} else {
 		execute(c)
 	}
+}
+
+func (c *CPU) IRQ() {
+	c.irq <- true
 }
 
 func (c *CPU) setFlagsNZ(value uint8) {

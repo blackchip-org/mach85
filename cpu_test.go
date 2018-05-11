@@ -160,3 +160,28 @@ func TestPull16(t *testing.T) {
 		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
 	}
 }
+
+func TestIRQ(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(AddrISR, 0xa9, 0x12)
+	c.IRQ()
+	c.Next()
+	want := uint8(0x12)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
+
+func TestIRQIgnore(t *testing.T) {
+	c := newTestCPU()
+	c.mem.StoreN(0x0200, 0xa9, 0x12)
+	c.I = true
+	c.IRQ()
+	c.Next()
+	want := uint8(0x12)
+	have := c.A
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
