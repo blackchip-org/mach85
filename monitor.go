@@ -62,6 +62,7 @@ func NewMonitor(mach *Mach85) *Monitor {
 const maxArgs = 0x100
 
 func (m *Monitor) Run() {
+	m.goCmd([]string{})
 	s := bufio.NewScanner(m.in)
 	s.Split(bufio.ScanLines)
 	for {

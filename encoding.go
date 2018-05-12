@@ -55,8 +55,11 @@ func decoder(code uint8, decode Decoder) (rune, bool) {
 }
 
 func PetsciiEncoder(ch rune) (uint8, bool) {
-	if ch >= 0x61 && ch <= 0x7a {
+	switch {
+	case ch >= 0x61 && ch <= 0x7a:
 		return uint8(ch - 0x20), true
+	case ch == 0x08:
+		return uint8(0x14), true
 	}
 	return uint8(ch), true
 }

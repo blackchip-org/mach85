@@ -14,7 +14,7 @@ type Keyboard struct {
 func NewKeyboard(mem *Memory) *Keyboard {
 	return &Keyboard{
 		mem:   mem,
-		debug: false,
+		debug: true,
 	}
 }
 
