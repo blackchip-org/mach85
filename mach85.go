@@ -2,11 +2,17 @@ package mach85
 
 import (
 	"log"
-	"time"
+	"os"
+
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type Device interface {
 	Service() error
+}
+
+type SDLInput interface {
+	SDLEvent(sdl.Event) error
 }
 
 type Mach85 struct {
@@ -15,6 +21,7 @@ type Mach85 struct {
 	Memory      *Memory
 	cpu         *CPU
 	devices     []Device
+	inputs      []SDLInput
 	dasm        *Disassembler
 	stop        chan bool
 }
@@ -44,6 +51,7 @@ func (m *Mach85) Init() error {
 	}
 	m.AddDevice(video)
 	m.AddDevice(NewJiffyClock(m.cpu))
+	m.AddInput(NewKeyboard(m.Memory))
 	m.cpu.PC = m.Memory.Load16(AddrResetVector) - 1
 	return nil
 }
@@ -63,11 +71,20 @@ func (m *Mach85) Run() {
 		default:
 			m.cycle()
 		}
+
+		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+			if _, ok := event.(*sdl.QuitEvent); ok {
+				os.Exit(0)
+			}
+			for _, input := range m.inputs {
+				input.SDLEvent(event)
+			}
+		}
 	}
 }
 
 func (m *Mach85) cycle() {
-	if m.Trace != nil {
+	if m.Trace != nil && !m.cpu.inISR {
 		m.dasm.PC = m.cpu.PC
 		m.Trace(m.dasm.Next())
 	}
@@ -90,23 +107,6 @@ func (m *Mach85) AddDevice(d Device) {
 	m.devices = append(m.devices, d)
 }
 
-// https://www.c64-wiki.com/wiki/Jiffy_Clock
-
-type JiffyClock struct {
-	lastUpdate time.Time
-	cpu        *CPU
-}
-
-func NewJiffyClock(cpu *CPU) *JiffyClock {
-	return &JiffyClock{cpu: cpu}
-}
-
-func (c *JiffyClock) Service() error {
-	now := time.Now()
-	if now.Sub(c.lastUpdate) < 16800000 { // 16.8 ms
-		return nil
-	}
-	c.lastUpdate = now
-	c.cpu.IRQ()
-	return nil
+func (m *Mach85) AddInput(i SDLInput) {
+	m.inputs = append(m.inputs, i)
 }

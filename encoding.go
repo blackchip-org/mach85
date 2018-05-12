@@ -53,3 +53,10 @@ func decoder(code uint8, decode Decoder) (rune, bool) {
 	}
 	return decode(code)
 }
+
+func PetsciiEncoder(ch rune) (uint8, bool) {
+	if ch >= 0x61 && ch <= 0x7a {
+		return uint8(ch - 0x20), true
+	}
+	return uint8(ch), true
+}
