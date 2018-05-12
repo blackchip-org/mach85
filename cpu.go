@@ -21,8 +21,9 @@ type CPU struct {
 	V bool // Overflow flag
 	N bool // Signed flag
 
-	mem *Memory
-	irq chan bool
+	mem   *Memory
+	irq   chan bool
+	inISR bool
 }
 
 func New6510(mem *Memory) *CPU {
@@ -109,7 +110,6 @@ func (c *CPU) Reset() {
 }
 
 func (c *CPU) Next() {
-
 	opcode := c.fetch()
 	execute, ok := executors[opcode]
 	if !ok {
@@ -117,12 +117,19 @@ func (c *CPU) Next() {
 	} else {
 		execute(c)
 	}
+	if opcode == 0x40 { // rti
+		c.inISR = false
+	}
 	select {
 	case <-c.irq:
 		if !c.I {
-			c.push16(c.PC)
+			// http://www.6502.org/tutorials/6502opcodes.html#RTI
+			// Note that unlike RTS, the return address on the stack is the
+			// actual address rather than the address-1.
+			c.push16(c.PC + 1)
 			c.push(c.SR())
 			c.PC = AddrISR - 1
+			c.inISR = true
 		}
 	default:
 	}
