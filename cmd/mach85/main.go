@@ -34,5 +34,5 @@ func main() {
 	decoder.Decode(source)
 	mon.Disassembler.LoadSource(source)
 
-	mon.Run()
+	mon.Go()
 }
