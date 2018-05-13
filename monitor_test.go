@@ -2,6 +2,7 @@ package mach85
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -10,6 +11,7 @@ import (
 func newTestMonitor() (*Monitor, *bytes.Buffer) {
 	var out bytes.Buffer
 	mach := New()
+	mach.cpu.StopOnBreak = true
 	mach.cpu.PC = 0x0800 - 1
 	mon := NewMonitor(mach)
 	mon.interactive = false
@@ -30,13 +32,14 @@ func TestBreakpointOn(t *testing.T) {
 }
 
 func TestBreakpointOff(t *testing.T) {
-	mon, _ := newTestMonitor()
+	mon, out := newTestMonitor()
 	mon.mach.Memory.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
 	mon.in = strings.NewReader("b 0x0802 on \n b 0x0802 off \n g")
 	mon.Run()
 	want := uint16(0x0804)
 	have := mon.cpu.PC
 	if want != have {
+		fmt.Println(out.String())
 		t.Errorf("\n want: %04x \n have: %04x \n", want, have)
 	}
 }

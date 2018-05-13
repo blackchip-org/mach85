@@ -306,7 +306,7 @@ var executors = map[uint8]func(c *CPU){
 	0x01: func(c *CPU) { ora(c, c.loadIndirectX) },
 	0x05: func(c *CPU) { ora(c, c.loadZeroPage) },
 	0x06: func(c *CPU) { asl(c, c.loadZeroPage) },
-	0x08: func(c *CPU) { c.push(c.SR()) }, // php
+	0x08: func(c *CPU) { php(c) }, // php
 	0x09: func(c *CPU) { ora(c, c.loadImmediate) },
 	0x0a: func(c *CPU) { asl(c, c.loadAccumulator) },
 	0x0d: func(c *CPU) { ora(c, c.loadAbsolute) },

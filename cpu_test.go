@@ -2,6 +2,7 @@ package mach85
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -13,11 +14,17 @@ func newTestCPU() *CPU {
 	c := New6510(mem)
 	c.SP = 0xff
 	c.PC = 0x1ff
+	c.StopOnBreak = true
 	return c
 }
 
 func testRunCPU(cpu *CPU) {
+	cycles := 0
 	for !cpu.B {
+		cycles++
+		if cycles > 100 {
+			fmt.Println("max cycles exceeded")
+		}
 		cpu.Next()
 	}
 }
@@ -165,6 +172,7 @@ func TestIRQ(t *testing.T) {
 	c := newTestCPU()
 	c.mem.Store(0x0200, 0xea)         // nop
 	c.mem.StoreN(AddrISR, 0xa9, 0x12) // lda #12
+	c.mem.Store16(AddrIrqVector, AddrISR)
 	c.IRQ()
 	c.Next()
 	c.Next()

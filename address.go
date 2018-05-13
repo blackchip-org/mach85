@@ -11,4 +11,6 @@ const (
 	AddrBackgroundColor   = uint16(0xd021)
 	AddrResetVector       = uint16(0xfffc)
 	AddrISR               = uint16(0xff48)
+	AddrNmiVector         = uint16(0xfffa)
+	AddrIrqVector         = uint16(0xfffe)
 )

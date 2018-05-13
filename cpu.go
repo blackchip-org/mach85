@@ -21,10 +21,23 @@ type CPU struct {
 	V bool // Overflow flag
 	N bool // Signed flag
 
+	StopOnBreak bool
+
 	mem   *Memory
 	irq   chan bool
 	inISR bool
 }
+
+const (
+	flagC = uint8(1 << 0)
+	flagZ = uint8(1 << 1)
+	flagI = uint8(1 << 2)
+	flagD = uint8(1 << 3)
+	flagB = uint8(1 << 4)
+	flag5 = uint8(1 << 5)
+	flagV = uint8(1 << 6)
+	flagN = uint8(1 << 7)
+)
 
 func New6510(mem *Memory) *CPU {
 	return &CPU{
@@ -55,7 +68,6 @@ func (c *CPU) SetSR(v uint8) {
 	c.Z = v&(1<<1) != 0
 	c.I = v&(1<<2) != 0
 	c.D = v&(1<<3) != 0
-	c.B = v&(1<<4) != 0
 	c.V = v&(1<<6) != 0
 	c.N = v&(1<<7) != 0
 }
@@ -128,7 +140,7 @@ func (c *CPU) Next() {
 			// actual address rather than the address-1.
 			c.push16(c.PC + 1)
 			c.push(c.SR())
-			c.PC = AddrISR - 1
+			c.PC = c.mem.Load16(AddrIrqVector) - 1
 			c.inISR = true
 		}
 	default:
@@ -188,21 +200,21 @@ func (c *CPU) loadIndirectY() (uint8, storer) {
 }
 
 func (c *CPU) loadZeroPage() (uint8, storer) {
-	address := uint16(c.fetch())
-	value := c.mem.Load(address)
-	return value, func(v uint8) { c.mem.Store(address, v) }
+	address := c.fetch()
+	value := c.mem.Load(uint16(address))
+	return value, func(v uint8) { c.mem.Store(uint16(address), v) }
 }
 
 func (c *CPU) loadZeroPageX() (uint8, storer) {
-	address := uint16(c.fetch() + c.X)
-	value := c.mem.Load(address)
-	return value, func(v uint8) { c.mem.Store(address, v) }
+	address := c.fetch() + c.X
+	value := c.mem.Load(uint16(address))
+	return value, func(v uint8) { c.mem.Store(uint16(address), v) }
 }
 
 func (c *CPU) loadZeroPageY() (uint8, storer) {
-	address := uint16(c.fetch() + c.Y)
-	value := c.mem.Load(address)
-	return value, func(v uint8) { c.mem.Store(address, v) }
+	address := c.fetch() + c.Y
+	value := c.mem.Load(uint16(address))
+	return value, func(v uint8) { c.mem.Store(uint16(address), v) }
 }
 
 func (c *CPU) storeAbsolute(value uint8) {

@@ -59,6 +59,13 @@ func branch(c *CPU, do bool) {
 func brk(c *CPU) {
 	c.B = true
 	c.fetch()
+	if c.StopOnBreak {
+		return
+	}
+	c.push16(c.PC + 1)
+	c.push(c.SR())
+	c.I = true
+	c.PC = c.mem.Load16(AddrIrqVector) - 1
 }
 
 func cmp(c *CPU, register uint8, load loader) {
@@ -153,6 +160,11 @@ func ora(c *CPU, load loader) {
 	value, _ := load()
 	c.A = c.A | value
 	c.setFlagsNZ(c.A)
+}
+
+func php(c *CPU) {
+	// https://wiki.nesdev.com/w/index.php/Status_flags
+	c.push(c.SR() | flagB)
 }
 
 func pla(c *CPU) {

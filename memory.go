@@ -38,6 +38,12 @@ func (m *Memory) Load16(address uint16) uint16 {
 	return hi<<8 + lo
 }
 
+func (m *Memory) Load16Z(address uint8) uint16 {
+	lo := m.Load(uint16(address))
+	hi := m.Load(uint16(address + 1))
+	return uint16(hi<<8 + lo)
+}
+
 func (m *Memory) Store16(address uint16, value uint16) {
 	m.Store(address, uint8(value%0x100))
 	m.Store(address+1, uint8(value>>8))

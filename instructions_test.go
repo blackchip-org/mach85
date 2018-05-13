@@ -6,17 +6,6 @@ import (
 
 // http://www.6502.org/tutorials/6502opcodes.html
 
-const (
-	flagC = uint8(1 << 0)
-	flagZ = uint8(1 << 1)
-	flagI = uint8(1 << 2)
-	flagD = uint8(1 << 3)
-	flagB = uint8(1 << 4)
-	flag5 = uint8(1 << 5)
-	flagV = uint8(1 << 6)
-	flagN = uint8(1 << 7)
-)
-
 func flagError(t *testing.T, want uint8, have uint8) {
 	t.Errorf("\n       nv-bdizc\n want: %08b \n have: %08b \n", want, have)
 }
@@ -2118,14 +2107,14 @@ func TestPha(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// pha
+// php
 // ----------------------------------------------------------------------------
 func TestPhp(t *testing.T) {
 	c := newTestCPU()
 	c.mem.StoreN(0x0200, 0x08)
 	c.C = true
 	testRunCPU(c)
-	want := flagC | flag5
+	want := flagC | flag5 | flagB
 	have := c.mem.Load(AddrStack + 0xff)
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
@@ -2421,15 +2410,15 @@ func TestRorAbsoluteX(t *testing.T) {
 func TestRti(t *testing.T) {
 	c := newTestCPU()
 	c.push16(0x1234)
-	c.push(0xff)
+	c.push(flagC | flag5)
 	c.mem.Store(0x0200, 0x40) //rti
 	testRunCPU(c)
-	wantSR := uint8(0x0ff)
+	wantSR := flagC | flag5 | flagB
 	haveSR := c.SR()
 	if wantSR != haveSR {
 		t.Errorf("\n want: %02x \n have: %02x \n", wantSR, haveSR)
 	}
-	wantPC := uint16(0x1233)
+	wantPC := uint16(0x1235)
 	havePC := c.PC
 	if wantPC != havePC {
 		t.Errorf("\n want: %04x \n have: %04x \n", wantPC, havePC)

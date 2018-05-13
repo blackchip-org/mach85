@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -16,12 +17,15 @@ const (
 	CmdBreakpoint          = "b"
 	CmdDisassemble         = "d"
 	CmdGo                  = "g"
+	CmdLoad                = "l"
 	CmdMemory              = "m"
 	CmdMemoryShifted       = "M"
 	CmdScreenMemory        = "sm"
 	CmdScreenMemoryShifted = "SM"
 	CmdPokePeek            = "p"
-	CmdQuit                = "quit"
+	CmdStep                = "s"
+	CmdQuit                = "q"
+	CmdQuitLong            = "quit"
 	CmdReset               = "reset"
 	CmdRegisters           = "r"
 	CmdTrace               = "t"
@@ -80,6 +84,7 @@ func (m *Monitor) Run() {
 
 func (m *Monitor) Go() {
 	m.goCmd([]string{})
+	m.Run()
 }
 
 func (m *Monitor) parse(line string) {
@@ -101,6 +106,8 @@ func (m *Monitor) parse(line string) {
 		err = m.breakpoint(args)
 	case CmdDisassemble:
 		err = m.disassemble(args)
+	case CmdLoad:
+		err = m.load(args)
 	case CmdGo:
 		err = m.goCmd(args)
 	case CmdMemory:
@@ -111,9 +118,11 @@ func (m *Monitor) parse(line string) {
 		err = m.memory(args, ScreenUnshiftedDecoder)
 	case CmdScreenMemoryShifted:
 		err = m.memory(args, ScreenShiftedDecoder)
+	case CmdStep:
+		err = m.step(args)
 	case CmdPokePeek:
 		err = m.pokePeek(args)
-	case CmdQuit:
+	case CmdQuit, CmdQuitLong:
 		m.quit = true
 		return
 	case CmdReset:
@@ -191,6 +200,23 @@ func (m *Monitor) disassemble(args []string) error {
 	return nil
 }
 
+func (m *Monitor) load(args []string) error {
+	if err := checkLen(args, 2, 2); err != nil {
+		return err
+	}
+	addr, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+	filename := args[1]
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	m.mem.Import(addr, data)
+	return nil
+}
+
 func (m *Monitor) memory(args []string, decoder Decoder) error {
 	if err := checkLen(args, 0, 2); err != nil {
 		return err
@@ -247,6 +273,14 @@ func (m *Monitor) pokePeek(args []string) error {
 	for offset, v := range values {
 		m.mem.Store(address+uint16(offset), v)
 	}
+	return nil
+}
+
+func (m *Monitor) step(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
+	}
+	m.cpu.Next()
 	return nil
 }
 

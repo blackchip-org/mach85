@@ -45,6 +45,7 @@ func (m *Mach85) Init() error {
 	if err := mem64.Init(); err != nil {
 		log.Fatal(err)
 	}
+
 	video, err := NewVideo(m.Memory)
 	if err != nil {
 		log.Fatalf("unable to create window: %v", err)
@@ -52,6 +53,7 @@ func (m *Mach85) Init() error {
 	m.AddDevice(video)
 	m.AddDevice(NewJiffyClock(m.cpu))
 	m.AddInput(NewKeyboard(m.Memory))
+
 	m.cpu.PC = m.Memory.Load16(AddrResetVector) - 1
 	return nil
 }
@@ -62,14 +64,21 @@ func (m *Mach85) Run() {
 		if _, ok := m.Breakpoints[m.cpu.PC+1]; ok {
 			return
 		}
-		if m.cpu.B {
+		if m.cpu.B && m.cpu.StopOnBreak {
 			return
 		}
 		select {
 		case <-m.stop:
 			return
 		default:
+			// DEBUG prev := m.cpu.PC
 			m.cycle()
+			/* DEBUG
+			if m.cpu.PC == prev && !m.cpu.inISR {
+				fmt.Println("trap")
+				return
+			}
+			*/
 		}
 
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {

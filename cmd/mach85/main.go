@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,8 +13,15 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+var wait bool
+
+func init() {
+	flag.BoolVar(&wait, "w", false, "wait for user to issue go command")
+}
+
 func main() {
 	log.SetFlags(0)
+	flag.Parse()
 
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		log.Fatalf("unable to initialize sdl: %v", err)
@@ -34,5 +43,10 @@ func main() {
 	decoder.Decode(source)
 	mon.Disassembler.LoadSource(source)
 
-	mon.Go()
+	if wait {
+		mon.Run()
+	} else {
+		fmt.Println("Press control-C to start monitor")
+		mon.Go()
+	}
 }
