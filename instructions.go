@@ -208,14 +208,21 @@ func sbc(c *CPU, load loader) {
 		v1 = fromBCD(v1)
 		v2 = fromBCD(v2)
 	}
-	utotal := uint16(v1) - uint16(v2)
+	utotal := v1 - v2
 	total := int16(int8(v1)) - int16(int8(v2))
+	borrow := false
+	if v1 < v2 {
+		borrow = true
+	}
 	// borrow if carry is clear
 	if !c.C {
+		if total == 0 {
+			borrow = true
+		}
 		utotal--
 		total--
 	}
-	c.C = total >= 0
+	c.C = !borrow
 	if c.D {
 		if total < 0 {
 			total += 100

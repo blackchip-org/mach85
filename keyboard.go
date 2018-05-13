@@ -50,6 +50,7 @@ var keys = keymap{
 	sdl.K_BACKSPACE:    0x14,
 	sdl.K_RETURN:       0x0d,
 	sdl.K_SPACE:        0x20,
+	sdl.K_QUOTE:        0x27,
 	sdl.K_PERIOD:       0x2e,
 	sdl.K_COMMA:        0x2c,
 	sdl.K_SLASH:        0x2f,
@@ -97,6 +98,7 @@ var keys = keymap{
 }
 
 var shifted = keymap{
+	sdl.K_QUOTE:     0x22,
 	sdl.K_PERIOD:    0x3e,
 	sdl.K_COMMA:     0x3c,
 	sdl.K_SLASH:     0x3f,
