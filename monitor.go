@@ -20,6 +20,7 @@ const (
 	CmdLoad                = "l"
 	CmdMemory              = "m"
 	CmdMemoryShifted       = "M"
+	CmdNext                = "n"
 	CmdScreenMemory        = "sm"
 	CmdScreenMemoryShifted = "SM"
 	CmdPokePeek            = "p"
@@ -120,6 +121,8 @@ func (m *Monitor) parse(line string) {
 		err = m.memory(args, ScreenUnshiftedDecoder)
 	case CmdScreenMemoryShifted:
 		err = m.memory(args, ScreenShiftedDecoder)
+	case CmdNext:
+		err = m.next(args)
 	case CmdStep:
 		err = m.step(args)
 	case CmdPokePeek:
@@ -249,6 +252,15 @@ func (m *Monitor) memory(args []string, decoder Decoder) error {
 	return nil
 }
 
+func (m *Monitor) next(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
+	}
+	m.Disassembler.PC = m.cpu.PC
+	m.out.Println(m.Disassembler.Next())
+	return nil
+}
+
 func (m *Monitor) pokePeek(args []string) error {
 	if err := checkLen(args, 1, maxArgs); err != nil {
 		return err
@@ -282,6 +294,8 @@ func (m *Monitor) step(args []string) error {
 	if err := checkLen(args, 0, 0); err != nil {
 		return err
 	}
+	m.Disassembler.PC = m.cpu.PC
+	m.out.Println(m.Disassembler.Next())
 	m.cpu.Next()
 	return nil
 }
@@ -333,11 +347,9 @@ func (m *Monitor) trace(args []string) error {
 	}
 	switch args[0] {
 	case "on":
-		m.mach.Trace = func(op Operation) {
-			m.out.Println(op)
-		}
+		m.traceOn()
 	case "off":
-		m.mach.Trace = nil
+		m.traceOff()
 	default:
 		return fmt.Errorf("invalid: %v", args[0])
 	}
@@ -351,6 +363,16 @@ func (m *Monitor) signalHandler() {
 	signal.Reset(os.Interrupt)
 	m.out.Println()
 	m.mach.Stop()
+}
+
+func (m *Monitor) traceOn() {
+	m.mach.Trace = func(op Operation) {
+		m.out.Println(op)
+	}
+}
+
+func (m *Monitor) traceOff() {
+	m.mach.Trace = nil
 }
 
 func checkLen(args []string, min int, max int) error {

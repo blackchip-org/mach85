@@ -25,3 +25,18 @@ func TestToBCDOverflow(t *testing.T) {
 		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
 	}
 }
+func TestSigned8Plus1(t *testing.T) {
+	want := int8(1)
+	have := signed8(uint8(1))
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
+
+func TestSigned8Minus1(t *testing.T) {
+	want := int8(-1)
+	have := signed8(uint8(0xff))
+	if want != have {
+		t.Errorf("\n want: %02x \n have: %02x\n", want, have)
+	}
+}
