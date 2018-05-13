@@ -188,7 +188,10 @@ func (c *CPU) loadImmediate() (uint8, storer) {
 }
 
 func (c *CPU) loadIndirectX() (uint8, storer) {
-	address := c.mem.Load16(uint16(c.fetch()) + uint16(c.X))
+	zpAddress := c.fetch() + c.X
+	lo := c.mem.Load(uint16(zpAddress))
+	hi := c.mem.Load(uint16(zpAddress + 1))
+	address := uint16(hi)<<8 + uint16(lo)
 	value := c.mem.Load(address)
 	return value, func(v uint8) { c.mem.Store(address, v) }
 }
@@ -233,7 +236,10 @@ func (c *CPU) storeAbsoluteY(value uint8) {
 }
 
 func (c *CPU) storeIndirectX(value uint8) {
-	address := c.mem.Load16(uint16(c.fetch()) + uint16(c.X))
+	zpAddress := c.fetch() + c.X
+	lo := c.mem.Load(uint16(zpAddress))
+	hi := c.mem.Load(uint16(zpAddress + 1))
+	address := uint16(hi)<<8 + uint16(lo)
 	c.mem.Store(address, value)
 }
 
@@ -243,16 +249,16 @@ func (c *CPU) storeIndirectY(value uint8) {
 }
 
 func (c *CPU) storeZeroPage(value uint8) {
-	address := uint16(c.fetch())
-	c.mem.Store(address, value)
+	address := c.fetch()
+	c.mem.Store(uint16(address), value)
 }
 
 func (c *CPU) storeZeroPageX(value uint8) {
-	address := uint16(c.fetch()) + uint16(c.X)
-	c.mem.Store(address, value)
+	address := c.fetch() + c.X
+	c.mem.Store(uint16(address), value)
 }
 
 func (c *CPU) storeZeroPageY(value uint8) {
-	address := uint16(c.fetch()) + uint16(c.Y)
-	c.mem.Store(address, value)
+	address := c.fetch() + c.Y
+	c.mem.Store(uint16(address), value)
 }

@@ -71,14 +71,12 @@ func (m *Mach85) Run() {
 		case <-m.stop:
 			return
 		default:
-			// DEBUG prev := m.cpu.PC
+			prev := m.cpu.PC
 			m.cycle()
-			/* DEBUG
-			if m.cpu.PC == prev && !m.cpu.inISR {
-				fmt.Println("trap")
+			if m.cpu.PC == prev /*&& !m.cpu.inISR*/ {
+				log.Print("trap: loop")
 				return
 			}
-			*/
 		}
 
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {

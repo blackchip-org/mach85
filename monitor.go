@@ -38,6 +38,7 @@ var (
 
 type Monitor struct {
 	Disassembler *Disassembler
+	Prompt       string
 	mach         *Mach85
 	cpu          *CPU
 	mem          *Memory
@@ -52,6 +53,7 @@ type Monitor struct {
 
 func NewMonitor(mach *Mach85) *Monitor {
 	mon := &Monitor{
+		Prompt:       "mach85",
 		mach:         mach,
 		cpu:          mach.cpu,
 		mem:          mach.Memory,
@@ -70,7 +72,7 @@ func (m *Monitor) Run() {
 	s.Split(bufio.ScanLines)
 	for {
 		if m.interactive {
-			fmt.Print("mach85> ")
+			fmt.Printf("%v> ", m.Prompt)
 		}
 		if !s.Scan() {
 			return
