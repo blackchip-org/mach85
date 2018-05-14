@@ -47,6 +47,13 @@ func (k *Keyboard) SDLEvent(event sdl.Event) error {
 	return nil
 }
 
+const (
+	KeyCursorDown  = uint8(0x11)
+	KeyCursorLeft  = uint8(0x9d)
+	KeyCursorRight = uint8(0x1d)
+	KeyCursorUp    = uint8(0x91)
+)
+
 // https://wiki.libsdl.org/SDLKeycodeLookup
 type keymap map[sdl.Keycode]uint8
 
@@ -99,6 +106,10 @@ var keys = keymap{
 	sdl.K_x:            0x58,
 	sdl.K_y:            0x59,
 	sdl.K_z:            0x5a,
+	sdl.K_DOWN:         KeyCursorDown,
+	sdl.K_LEFT:         KeyCursorLeft,
+	sdl.K_RIGHT:        KeyCursorRight,
+	sdl.K_UP:           KeyCursorUp,
 }
 
 var shifted = keymap{
@@ -156,8 +167,10 @@ func (k *Keyboard) lookup(e *sdl.KeyboardEvent) (uint8, bool) {
 	keysym := e.Keysym
 	switch {
 	case keysym.Mod&sdl.KMOD_CTRL > 0 && keysym.Sym == sdl.K_ESCAPE:
-		k.mach.Reset()
-		return 0, false
+		if e.Type == sdl.KEYUP {
+			k.mach.Reset()
+			return 0, false
+		}
 	case keysym.Mod&sdl.KMOD_CTRL > 0 && keysym.Sym == sdl.K_BACKSPACE:
 		if e.Type == sdl.KEYDOWN {
 			k.mem.Store(AddrStopKey, 0x7f)
