@@ -4,6 +4,7 @@ package mach85
 
 const (
 	AddrProcessorPort     = uint16(0x0001)
+	AddrStopKey           = uint16(0x0091)
 	AddrKeyboardBufferLen = uint16(0x00c6)
 	AddrStack             = uint16(0x0100)
 	AddrKeyboardBuffer    = uint16(0x0277)

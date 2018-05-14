@@ -33,13 +33,7 @@ func (k *Keyboard) SDLEvent(event sdl.Event) error {
 	if debugKeyboard {
 		fmt.Printf("key: %+v\n", e.Keysym)
 	}
-	if e.Type != sdl.KEYDOWN {
-		return nil
-	}
-	if k.special(e.Keysym) {
-		return nil
-	}
-	ch, ok := k.lookup(e.Keysym)
+	ch, ok := k.lookup(e)
 	if !ok {
 		return nil
 	}
@@ -158,7 +152,23 @@ var keymaps = map[sdl.Keymod]keymap{
 	sdl.KMOD_RSHIFT: shifted,
 }
 
-func (k *Keyboard) lookup(keysym sdl.Keysym) (uint8, bool) {
+func (k *Keyboard) lookup(e *sdl.KeyboardEvent) (uint8, bool) {
+	keysym := e.Keysym
+	switch {
+	case keysym.Mod&sdl.KMOD_CTRL > 0 && keysym.Sym == sdl.K_ESCAPE:
+		k.mach.Reset()
+		return 0, false
+	case keysym.Mod&sdl.KMOD_CTRL > 0 && keysym.Sym == sdl.K_BACKSPACE:
+		if e.Type == sdl.KEYDOWN {
+			k.mem.Store(AddrStopKey, 0x7f)
+		} else if e.Type == sdl.KEYUP {
+			k.mem.Store(AddrStopKey, 0xff)
+		}
+	}
+
+	if e.Type != sdl.KEYDOWN {
+		return 0, false
+	}
 	keymap0 := keymaps[sdl.KMOD_NONE]
 	keymap, ok := keymaps[sdl.Keymod(keysym.Mod)]
 	if !ok {
@@ -175,9 +185,5 @@ func (k *Keyboard) lookup(keysym sdl.Keysym) (uint8, bool) {
 }
 
 func (k *Keyboard) special(keysym sdl.Keysym) bool {
-	if keysym.Mod&sdl.KMOD_CTRL > 0 && keysym.Sym == sdl.K_ESCAPE {
-		k.mach.Reset()
-		return true
-	}
 	return false
 }
