@@ -14,12 +14,14 @@ func init() {
 }
 
 type Keyboard struct {
-	mem *Memory
+	mach *Mach85
+	mem  *Memory
 }
 
-func NewKeyboard(mem *Memory) *Keyboard {
+func NewKeyboard(mach *Mach85) *Keyboard {
 	return &Keyboard{
-		mem: mem,
+		mach: mach,
+		mem:  mach.Memory,
 	}
 }
 
@@ -34,7 +36,10 @@ func (k *Keyboard) SDLEvent(event sdl.Event) error {
 	if e.Type != sdl.KEYDOWN {
 		return nil
 	}
-	ch, ok := lookup(e.Keysym)
+	if k.special(e.Keysym) {
+		return nil
+	}
+	ch, ok := k.lookup(e.Keysym)
 	if !ok {
 		return nil
 	}
@@ -153,7 +158,7 @@ var keymaps = map[sdl.Keymod]keymap{
 	sdl.KMOD_RSHIFT: shifted,
 }
 
-func lookup(keysym sdl.Keysym) (uint8, bool) {
+func (k *Keyboard) lookup(keysym sdl.Keysym) (uint8, bool) {
 	keymap0 := keymaps[sdl.KMOD_NONE]
 	keymap, ok := keymaps[sdl.Keymod(keysym.Mod)]
 	if !ok {
@@ -167,4 +172,12 @@ func lookup(keysym sdl.Keysym) (uint8, bool) {
 		return 0, false
 	}
 	return ch, true
+}
+
+func (k *Keyboard) special(keysym sdl.Keysym) bool {
+	if keysym.Mod&sdl.KMOD_CTRL > 0 && keysym.Sym == sdl.K_BACKSPACE {
+		k.mach.Reset()
+		return true
+	}
+	return false
 }

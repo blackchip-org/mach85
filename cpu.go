@@ -24,8 +24,9 @@ type CPU struct {
 	StopOnBreak bool
 
 	mem   *Memory
-	irq   chan bool
 	inISR bool
+	irq   chan bool
+	reset chan bool
 }
 
 const (
@@ -41,8 +42,9 @@ const (
 
 func New6510(mem *Memory) *CPU {
 	return &CPU{
-		mem: mem,
-		irq: make(chan bool, 10),
+		mem:   mem,
+		irq:   make(chan bool, 10),
+		reset: make(chan bool, 10),
 	}
 }
 
@@ -117,8 +119,7 @@ func (c *CPU) pull16() uint16 {
 }
 
 func (c *CPU) Reset() {
-	// Vector is actual start address so set the PC one byte behind
-	c.PC = c.mem.Load16(AddrResetVector) - 1
+	c.reset <- true
 }
 
 func (c *CPU) Next() {
@@ -143,6 +144,9 @@ func (c *CPU) Next() {
 			c.PC = c.mem.Load16(AddrIrqVector) - 1
 			c.inISR = true
 		}
+	case <-c.reset:
+		// Vector is actual start address so set the PC one byte behind
+		c.PC = c.mem.Load16(AddrResetVector) - 1
 	default:
 	}
 }

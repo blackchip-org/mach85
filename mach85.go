@@ -33,9 +33,9 @@ func New() *Mach85 {
 		Memory:      mem,
 		cpu:         cpu,
 		dasm:        NewDisassembler(mem),
-		stop:        make(chan bool),
 		Breakpoints: map[uint16]bool{},
 		devices:     []Device{},
+		stop:        make(chan bool),
 	}
 	return m
 }
@@ -52,7 +52,7 @@ func (m *Mach85) Init() error {
 	}
 	m.AddDevice(video)
 	m.AddDevice(NewJiffyClock(m.cpu))
-	m.AddInput(NewKeyboard(m.Memory))
+	m.AddInput(NewKeyboard(m))
 
 	m.cpu.PC = m.Memory.Load16(AddrResetVector) - 1
 	return nil
@@ -107,7 +107,6 @@ func (m *Mach85) Stop() {
 
 func (m *Mach85) Reset() {
 	m.cpu.Reset()
-	m.Run()
 }
 
 func (m *Mach85) AddDevice(d Device) {
