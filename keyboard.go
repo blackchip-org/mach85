@@ -175,7 +175,7 @@ func (k *Keyboard) lookup(keysym sdl.Keysym) (uint8, bool) {
 }
 
 func (k *Keyboard) special(keysym sdl.Keysym) bool {
-	if keysym.Mod&sdl.KMOD_CTRL > 0 && keysym.Sym == sdl.K_BACKSPACE {
+	if keysym.Mod&sdl.KMOD_CTRL > 0 && keysym.Sym == sdl.K_ESCAPE {
 		k.mach.Reset()
 		return true
 	}
