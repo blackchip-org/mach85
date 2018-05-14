@@ -2526,7 +2526,7 @@ func TestSbcOverflowSet(t *testing.T) {
 	if want != have {
 		t.Errorf("\n want: %02x \n have: %02x \n", want, have)
 	}
-	want = flagV | flagB | flag5
+	want = flagV | flagB | flag5 | flagC
 	have = c.SR()
 	if want != have {
 		flagError(t, want, have)
