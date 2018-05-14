@@ -1,20 +1,25 @@
 package mach85
 
 import (
+	"flag"
 	"fmt"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+var debugKeyboard bool
+
+func init() {
+	flag.BoolVar(&debugKeyboard, "debug-keyboard", false, "log keystroke events")
+}
+
 type Keyboard struct {
-	mem   *Memory
-	debug bool
+	mem *Memory
 }
 
 func NewKeyboard(mem *Memory) *Keyboard {
 	return &Keyboard{
-		mem:   mem,
-		debug: false,
+		mem: mem,
 	}
 }
 
@@ -23,11 +28,11 @@ func (k *Keyboard) SDLEvent(event sdl.Event) error {
 	if !ok {
 		return nil
 	}
-	if e.Type != sdl.KEYUP {
-		return nil
-	}
-	if k.debug {
+	if debugKeyboard {
 		fmt.Printf("key: %+v\n", e.Keysym)
+	}
+	if e.Type != sdl.KEYDOWN {
+		return nil
 	}
 	ch, ok := lookup(e.Keysym)
 	if !ok {
