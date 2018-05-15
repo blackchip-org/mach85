@@ -43,7 +43,7 @@ Install go and SDL2 with:
 ```bash
 brew install \
     go \
-    sdl2{,_image,_mixer,_ttf,_gfx \
+    sdl2{,_image,_mixer,_ttf,_gfx} \
     pkg-config
 ```
 
