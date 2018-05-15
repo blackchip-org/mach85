@@ -7,3 +7,5 @@ l 0 ../../asm/6502_functional_test.bin
 t on
 g 400
 ```
+
+- https://www.yoyogames.com/blog/85
