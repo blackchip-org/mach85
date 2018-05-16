@@ -27,7 +27,7 @@ Install go and SDL2 with:
 ```bash
 sudo apt-get install -y \
     golang \
-    libsdl2-dev
+    libsdl2-dev \
     libsdl2-image-dev \
     libsdl2-mixer-dev \
     libsdl2-ttf-dev \
