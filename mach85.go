@@ -3,6 +3,7 @@ package mach85
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -60,6 +61,7 @@ func (m *Mach85) Init() error {
 
 func (m *Mach85) Run() {
 	m.cpu.B = false
+	lastUpdate := time.Now()
 	for {
 		if _, ok := m.Breakpoints[m.cpu.PC+1]; ok {
 			return
@@ -71,20 +73,19 @@ func (m *Mach85) Run() {
 		case <-m.stop:
 			return
 		default:
-			prev := m.cpu.PC
 			m.cycle()
-			if m.cpu.PC == prev /*&& !m.cpu.inISR*/ {
-				log.Print("trap: loop")
-				return
-			}
 		}
 
-		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			if _, ok := event.(*sdl.QuitEvent); ok {
-				os.Exit(0)
-			}
-			for _, input := range m.inputs {
-				input.SDLEvent(event)
+		now := time.Now()
+		if now.Sub(lastUpdate) > time.Millisecond {
+			lastUpdate = now
+			for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+				if _, ok := event.(*sdl.QuitEvent); ok {
+					os.Exit(0)
+				}
+				for _, input := range m.inputs {
+					input.SDLEvent(event)
+				}
 			}
 		}
 	}
