@@ -80,7 +80,7 @@ Don't use this [undocumented documentation](https://godoc.org/github.com/blackch
 
 This works:
 
-```basic
+```basic[]
 10 PRINT "HELLO WORLD"
 20 GOTO 10
 
@@ -88,6 +88,8 @@ RUN
 ```
 
 Probably not much more than that works.
+
+![HELLO WORLD](doc/hello_world.png)
 
 More to come? We shall see.
 
