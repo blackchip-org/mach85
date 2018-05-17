@@ -6,12 +6,14 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func newTestMonitor() (*Monitor, *bytes.Buffer) {
 	var out bytes.Buffer
 	mach := New()
-	mach.cpu.StopOnBreak = true
+	mach.StopOnBreak = true
+	mach.QuitOnStop = true
 	mach.cpu.PC = 0x0800 - 1
 	mon := NewMonitor(mach)
 	mon.interactive = false
@@ -19,11 +21,18 @@ func newTestMonitor() (*Monitor, *bytes.Buffer) {
 	return mon, &out
 }
 
+func testMonitorRun(mon *Monitor) {
+	go mon.Run()
+	time.Sleep(time.Millisecond * 10)
+	mon.mach.Start()
+	mon.mach.Run()
+}
+
 func TestBreakpointOn(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.mach.Memory.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
 	mon.in = strings.NewReader("b 0x0802 on \n g")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint16(0x0801)
 	have := mon.cpu.PC
 	if want != have {
@@ -35,7 +44,7 @@ func TestBreakpointOff(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.mach.Memory.StoreN(0x0800, 0xea, 0xea, 0xea) // nop
 	mon.in = strings.NewReader("b 0x0802 on \n b 0x0802 off \n g")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint16(0x0804)
 	have := mon.cpu.PC
 	if want != have {
@@ -47,7 +56,7 @@ func TestBreakpointOff(t *testing.T) {
 func TestBreakpointNotEnoughArguments(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("b")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "not enough arguments"
 	have := lines[0]
@@ -59,7 +68,7 @@ func TestBreakpointNotEnoughArguments(t *testing.T) {
 func TestBreakpointTooManyArguments(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("b 0x0800 on on")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "too many arguments"
 	have := lines[0]
@@ -75,7 +84,7 @@ func TestDisassembleFirstLine(t *testing.T) {
 		0x00, // brk
 	)
 	mon.in = strings.NewReader("d")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "$0800: a9 12     lda #$12"
 	have := lines[0]
@@ -90,7 +99,7 @@ func TestDisassembleLastLine(t *testing.T) {
 		0xa9, 0x34, // lda #$34
 	)
 	mon.in = strings.NewReader("d")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$083e: a9 34     lda #$34"
 	have := lines[len(lines)-1]
@@ -102,7 +111,7 @@ func TestDisassembleLastLine(t *testing.T) {
 func TestDisassemblePage(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("d 0800")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$083f: 00        brk"
 	have := lines[len(lines)-1]
@@ -114,7 +123,7 @@ func TestDisassemblePage(t *testing.T) {
 func TestDisassembleNextPage(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("d 0800 \n d \n d")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$08bf: 00        brk"
 	have := lines[len(lines)-1]
@@ -126,7 +135,7 @@ func TestDisassembleNextPage(t *testing.T) {
 func TestDisassembleRange(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("d 0800 0812")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$0812: 00        brk"
 	have := lines[len(lines)-1]
@@ -138,7 +147,7 @@ func TestDisassembleRange(t *testing.T) {
 func TestDisassembleTooManyArguments(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("d 0800 0812 0812")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "too many arguments"
 	have := lines[0]
@@ -154,7 +163,7 @@ func TestGo(t *testing.T) {
 		0x00, // brk
 	)
 	mon.in = strings.NewReader("g")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0x12)
 	have := mon.mach.cpu.A
 	if want != have {
@@ -171,8 +180,10 @@ func TestGoContinued(t *testing.T) {
 		0xa9, 0x34, // lda #34
 		0x00, // brk
 	)
-	mon.in = strings.NewReader("g \n g")
-	mon.Run()
+	mon.in = strings.NewReader("g")
+	testMonitorRun(mon)
+	mon.in = strings.NewReader("g")
+	testMonitorRun(mon)
 	want := uint8(0x34)
 	have := mon.mach.cpu.A
 	if want != have {
@@ -187,7 +198,7 @@ func TestGoAddress(t *testing.T) {
 		0x00, // brk
 	)
 	mon.in = strings.NewReader("g 0900")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0x12)
 	have := mon.mach.cpu.A
 	if want != have {
@@ -202,7 +213,7 @@ func TestGoAddressOldHexSigil(t *testing.T) {
 		0x00, // brk
 	)
 	mon.in = strings.NewReader("g $0900")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0x12)
 	have := mon.mach.cpu.A
 	if want != have {
@@ -217,7 +228,7 @@ func TestGoAddressNewHexSigil(t *testing.T) {
 		0x00, // brk
 	)
 	mon.in = strings.NewReader("g 0x0900")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0x12)
 	have := mon.mach.cpu.A
 	if want != have {
@@ -232,7 +243,7 @@ func TestGoAddressDecimalSigil(t *testing.T) {
 		0x00, // brk
 	)
 	mon.in = strings.NewReader("g +2304")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0x12)
 	have := mon.mach.cpu.A
 	if want != have {
@@ -243,7 +254,7 @@ func TestGoAddressDecimalSigil(t *testing.T) {
 func TestGoInvalidAddress(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("g foo")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "invalid address: foo"
 	have := lines[0]
@@ -255,7 +266,7 @@ func TestGoInvalidAddress(t *testing.T) {
 func TestGoTooManyArguments(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("g $0800 foo")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "too many arguments"
 	have := lines[0]
@@ -267,7 +278,7 @@ func TestGoTooManyArguments(t *testing.T) {
 func TestMemoryFirstLine(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("m")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "$0800 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
 	have := lines[0]
@@ -279,7 +290,7 @@ func TestMemoryFirstLine(t *testing.T) {
 func TestMemoryLastLine(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("m")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$08f0 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
 	have := lines[len(lines)-1]
@@ -291,7 +302,7 @@ func TestMemoryLastLine(t *testing.T) {
 func TestMemoryPage(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("m 0800")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$08f0 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
 	have := lines[len(lines)-1]
@@ -303,7 +314,7 @@ func TestMemoryPage(t *testing.T) {
 func TestMemoryNextPage(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("m 0800 \n m \n m")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$0af0 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 ................"
 	have := lines[len(lines)-1]
@@ -315,7 +326,7 @@ func TestMemoryNextPage(t *testing.T) {
 func TestMemoryRange(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("m 0800 081a")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$0810 00 00 00 00 00 00 00 00  00 00 00                ..........."
 	have := lines[len(lines)-1]
@@ -331,7 +342,7 @@ func TestMemoryUnshifted(t *testing.T) {
 		mon.mem.Store(uint16(0x0800+i), code)
 	}
 	mon.in = strings.NewReader("m 0800 080f")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$0800 40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f @ABCDEFGHIJKLMNO"
 	have := lines[len(lines)-1]
@@ -347,7 +358,7 @@ func TestMemoryShifted(t *testing.T) {
 		mon.mem.Store(uint16(0x0800+i), code)
 	}
 	mon.in = strings.NewReader("M 0800 080f")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := "$0800 40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f @abcdefghijklmno"
 	have := lines[len(lines)-1]
@@ -359,7 +370,7 @@ func TestMemoryShifted(t *testing.T) {
 func TestMemoryTooManyArguments(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("m 0800 0812 0812")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "too many arguments"
 	have := lines[0]
@@ -371,7 +382,7 @@ func TestMemoryTooManyArguments(t *testing.T) {
 func TestPoke(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.in = strings.NewReader("p 0900 ab")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0xab)
 	have := mon.mem.Load(0x0900)
 	if want != have {
@@ -382,7 +393,7 @@ func TestPoke(t *testing.T) {
 func TestPokeOldHexSigil(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.in = strings.NewReader("p 0900 $ab")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0xab)
 	have := mon.mem.Load(0x0900)
 	if want != have {
@@ -393,7 +404,7 @@ func TestPokeOldHexSigil(t *testing.T) {
 func TestPokeOldNewSigil(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.in = strings.NewReader("p 0900 0xab")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0xab)
 	have := mon.mem.Load(0x0900)
 	if want != have {
@@ -404,7 +415,7 @@ func TestPokeOldNewSigil(t *testing.T) {
 func TestPokeDecimalSigil(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.in = strings.NewReader("p 0900 +171")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0xab)
 	have := mon.mem.Load(0x0900)
 	if want != have {
@@ -415,7 +426,7 @@ func TestPokeDecimalSigil(t *testing.T) {
 func TestPokeInvalid(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("p 0900 foo")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "invalid value: foo"
 	have := lines[0]
@@ -427,7 +438,7 @@ func TestPokeInvalid(t *testing.T) {
 func TestPokeOutOfRange(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("p 0900 1234")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "invalid value: 1234"
 	have := lines[0]
@@ -439,7 +450,7 @@ func TestPokeOutOfRange(t *testing.T) {
 func TestPokeN(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.in = strings.NewReader("p 0900 ab cd ef 12 34")
-	mon.Run()
+	testMonitorRun(mon)
 	want := uint8(0x34)
 	have := mon.mem.Load(0x0904)
 	if want != have {
@@ -450,7 +461,7 @@ func TestPokeN(t *testing.T) {
 func TestPokeNotEnoughArguments(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("p")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "not enough arguments"
 	have := lines[0]
@@ -463,7 +474,7 @@ func TestPeek(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.mem.Store(0x0900, 0xab)
 	mon.in = strings.NewReader("p 0900")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "$ab +171"
 	have := lines[0]
@@ -478,7 +489,7 @@ func TestTrace(t *testing.T) {
 		0xa9, 0x34, // lda #$34
 	)
 	mon.in = strings.NewReader("t on \n t \n g")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := []string{
 		"trace on",
@@ -497,7 +508,7 @@ func TestTraceDisabled(t *testing.T) {
 		0xa9, 0x34, // lda #$34
 	)
 	mon.in = strings.NewReader("t on \n t off \n t \n g")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
 	want := []string{
 		"trace off",
@@ -511,7 +522,7 @@ func TestTraceDisabled(t *testing.T) {
 func TestTraceTooManyArguments(t *testing.T) {
 	mon, out := newTestMonitor()
 	mon.in = strings.NewReader("t on on")
-	mon.Run()
+	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "too many arguments"
 	have := lines[0]

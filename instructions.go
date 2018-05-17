@@ -59,13 +59,6 @@ func branch(c *CPU, do bool) {
 func brk(c *CPU) {
 	c.B = true
 	c.fetch()
-	if c.StopOnBreak {
-		return
-	}
-	c.push16(c.PC + 1)
-	c.push(c.SR())
-	c.I = true
-	c.PC = c.mem.Load16(AddrIrqVector) - 1
 }
 
 func cmp(c *CPU, register uint8, load loader) {

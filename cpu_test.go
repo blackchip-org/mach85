@@ -14,7 +14,6 @@ func newTestCPU() *CPU {
 	c := New6510(mem)
 	c.SP = 0xff
 	c.PC = 0x1ff
-	c.StopOnBreak = true
 	return c
 }
 

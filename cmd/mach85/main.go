@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -43,10 +42,9 @@ func main() {
 	decoder.Decode(source)
 	mon.Disassembler.LoadSource(source)
 
-	if wait {
-		mon.Run()
-	} else {
-		fmt.Println("Press control-C to start monitor")
-		mon.Go()
+	go mon.Run()
+	if !wait {
+		mach.Start()
 	}
+	mach.Run()
 }

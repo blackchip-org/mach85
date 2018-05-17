@@ -17,6 +17,7 @@ const (
 	CmdBreakpoint          = "b"
 	CmdDisassemble         = "d"
 	CmdGo                  = "g"
+	CmdHalt                = "h"
 	CmdLoad                = "l"
 	CmdMemory              = "m"
 	CmdMemoryShifted       = "M"
@@ -27,9 +28,9 @@ const (
 	CmdStep                = "s"
 	CmdQuit                = "q"
 	CmdQuitLong            = "quit"
-	CmdReset               = "reset"
 	CmdRegisters           = "r"
 	CmdTrace               = "t"
+	CmdZap                 = "z"
 )
 
 var (
@@ -46,7 +47,6 @@ type Monitor struct {
 	in           io.Reader
 	out          *log.Logger
 	interactive  bool
-	quit         bool
 	lastCmd      string
 	memPtr       uint16
 	dasmPtr      uint16
@@ -79,9 +79,6 @@ func (m *Monitor) Run() {
 			return
 		}
 		m.parse(s.Text())
-		if m.quit {
-			return
-		}
 	}
 }
 
@@ -113,6 +110,8 @@ func (m *Monitor) parse(line string) {
 		err = m.load(args)
 	case CmdGo:
 		err = m.goCmd(args)
+	case CmdHalt:
+		err = m.halt(args)
 	case CmdMemory:
 		err = m.memory(args, PetsciiUnshiftedDecoder)
 	case CmdMemoryShifted:
@@ -128,14 +127,13 @@ func (m *Monitor) parse(line string) {
 	case CmdPokePeek:
 		err = m.pokePeek(args)
 	case CmdQuit, CmdQuitLong:
-		m.quit = true
-		return
-	case CmdReset:
-		err = m.reset(args)
+		os.Exit(0)
 	case CmdRegisters:
 		err = m.registers(args)
 	case CmdTrace:
 		err = m.trace(args)
+	case CmdZap:
+		err = m.zap(args)
 	default:
 		err = fmt.Errorf("unknown command: %v", cmd)
 	}
@@ -202,6 +200,14 @@ func (m *Monitor) disassemble(args []string) error {
 		m.out.Println(m.Disassembler.Next().String())
 	}
 	m.dasmPtr = m.Disassembler.PC
+	return nil
+}
+
+func (m *Monitor) halt(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
+	}
+	m.mach.Stop()
 	return nil
 }
 
@@ -308,15 +314,6 @@ func (m *Monitor) registers(args []string) error {
 	return nil
 }
 
-func (m *Monitor) reset(args []string) error {
-	if err := checkLen(args, 0, 0); err != nil {
-		return err
-	}
-	go m.signalHandler()
-	m.mach.Reset()
-	return nil
-}
-
 func (m *Monitor) goCmd(args []string) error {
 	if err := checkLen(args, 0, 1); err != nil {
 		return err
@@ -328,8 +325,7 @@ func (m *Monitor) goCmd(args []string) error {
 		}
 		m.cpu.PC = address - 1
 	}
-	go m.signalHandler()
-	m.mach.Run()
+	go m.mach.Start()
 	return nil
 }
 
@@ -353,6 +349,15 @@ func (m *Monitor) trace(args []string) error {
 	default:
 		return fmt.Errorf("invalid: %v", args[0])
 	}
+	return nil
+}
+
+func (m *Monitor) zap(args []string) error {
+	if err := checkLen(args, 0, 0); err != nil {
+		return err
+	}
+	//go m.signalHandler()
+	m.mach.Reset()
 	return nil
 }
 

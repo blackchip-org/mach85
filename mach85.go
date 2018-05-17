@@ -16,14 +16,29 @@ type SDLInput interface {
 	SDLEvent(sdl.Event) error
 }
 
+type Status int
+
+const (
+	Init Status = iota
+	Halt
+	Run
+	Break
+	Breakpoint
+	Trap
+)
+
 type Mach85 struct {
 	Trace       func(op Operation)
 	Breakpoints map[uint16]bool
 	Memory      *Memory
+	Status      Status
+	StopOnBreak bool
+	QuitOnStop  bool
 	cpu         *CPU
 	devices     []Device
 	inputs      []SDLInput
 	dasm        *Disassembler
+	start       chan bool
 	stop        chan bool
 }
 
@@ -36,7 +51,8 @@ func New() *Mach85 {
 		dasm:        NewDisassembler(mem),
 		Breakpoints: map[uint16]bool{},
 		devices:     []Device{},
-		stop:        make(chan bool),
+		start:       make(chan bool, 10),
+		stop:        make(chan bool, 10),
 	}
 	return m
 }
@@ -60,18 +76,32 @@ func (m *Mach85) Init() error {
 }
 
 func (m *Mach85) Run() {
-	m.cpu.B = false
-	lastUpdate := time.Now()
+	m.Status = Init
 	for {
-		if _, ok := m.Breakpoints[m.cpu.PC+1]; ok {
+		if m.Status != Init && m.Status != Run && m.QuitOnStop {
 			return
 		}
-		if m.cpu.B && m.cpu.StopOnBreak {
-			return
+		if m.Status != Run {
+			<-m.start
+			m.cpu.B = false
+		}
+		lastUpdate := time.Now()
+		m.Status = Run
+		if _, ok := m.Breakpoints[m.cpu.PC+1]; ok {
+			m.Status = Breakpoint
+			continue
+		}
+		if m.cpu.B {
+			if m.StopOnBreak {
+				m.Status = Break
+				continue
+			}
+			m.cpu.brk()
 		}
 		select {
 		case <-m.stop:
-			return
+			m.Status = Halt
+			continue
 		default:
 			m.cycle()
 		}
@@ -100,6 +130,10 @@ func (m *Mach85) cycle() {
 	for _, d := range m.devices {
 		d.Service()
 	}
+}
+
+func (m *Mach85) Start() {
+	m.start <- true
 }
 
 func (m *Mach85) Stop() {

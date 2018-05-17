@@ -21,8 +21,6 @@ type CPU struct {
 	V bool // Overflow flag
 	N bool // Signed flag
 
-	StopOnBreak bool
-
 	mem   *Memory
 	inISR bool
 	irq   chan bool
@@ -120,6 +118,13 @@ func (c *CPU) pull16() uint16 {
 
 func (c *CPU) Reset() {
 	c.reset <- true
+}
+
+func (c *CPU) brk() {
+	c.push16(c.PC + 1)
+	c.push(c.SR())
+	c.I = true
+	c.PC = c.mem.Load16(AddrIrqVector) - 1
 }
 
 func (c *CPU) Next() {
