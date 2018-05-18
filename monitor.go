@@ -22,6 +22,7 @@ const (
 	CmdGo                  = "g"
 	CmdHalt                = "h"
 	CmdLoad                = "l"
+	CmdLoadProgram         = "lp"
 	CmdMemory              = "m"
 	CmdMemoryShifted       = "M"
 	CmdNext                = "n"
@@ -117,6 +118,8 @@ func (m *Monitor) parse(line string) {
 		err = m.disassemble(args)
 	case CmdLoad:
 		err = m.load(args)
+	case CmdLoadProgram:
+		err = m.loadProgram(args)
 	case CmdGo:
 		err = m.goCmd(args)
 	case CmdHalt:
@@ -234,6 +237,22 @@ func (m *Monitor) load(args []string) error {
 		return err
 	}
 	m.mem.Import(addr, data)
+	return nil
+}
+
+func (m *Monitor) loadProgram(args []string) error {
+	if err := checkLen(args, 1, 1); err != nil {
+		return err
+	}
+	filename := args[0]
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	addr := uint16(data[0]) + uint16(data[1])<<8
+	end := addr + uint16(len(data)) - 2
+	m.out.Printf("$%04x - $%04x\n", addr, end)
+	m.mem.Import(addr, data[2:])
 	return nil
 }
 
