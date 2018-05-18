@@ -77,6 +77,7 @@ func (m *Mach85) Init() error {
 
 func (m *Mach85) Run() {
 	m.Status = Init
+	lastUpdate := time.Now()
 	for {
 		if m.Status != Init && m.Status != Run && m.QuitOnStop {
 			return
@@ -85,7 +86,6 @@ func (m *Mach85) Run() {
 			<-m.start
 			m.cpu.B = false
 		}
-		lastUpdate := time.Now()
 		m.Status = Run
 		if _, ok := m.Breakpoints[m.cpu.PC+1]; ok {
 			m.Status = Breakpoint

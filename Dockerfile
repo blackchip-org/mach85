@@ -12,4 +12,5 @@ RUN apt-get install -y \
 
 RUN mkdir -p /root/go/src/github.com/blackchip-org/mach85
 RUN go get github.com/veandco/go-sdl2/sdl
+RUN go get github.com/chzyer/readline
 
