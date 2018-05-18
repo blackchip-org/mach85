@@ -1,7 +1,6 @@
 package mach85
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -9,8 +8,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/chzyer/readline"
 )
 
 const (
@@ -44,9 +47,8 @@ type Monitor struct {
 	mach         *Mach85
 	cpu          *CPU
 	mem          *Memory
-	in           io.Reader
+	in           io.ReadCloser
 	out          *log.Logger
-	interactive  bool
 	lastCmd      string
 	memPtr       uint16
 	dasmPtr      uint16
@@ -54,31 +56,38 @@ type Monitor struct {
 
 func NewMonitor(mach *Mach85) *Monitor {
 	mon := &Monitor{
-		Prompt:       "mach85",
+		Prompt:       "mach85> ",
 		mach:         mach,
 		cpu:          mach.cpu,
 		mem:          mach.Memory,
-		in:           os.Stdin,
+		in:           ioutil.NopCloser(os.Stdin),
 		out:          log.New(os.Stdout, "", 0),
 		Disassembler: NewDisassembler(mach.Memory),
-		interactive:  true,
 	}
 	return mon
 }
 
 const maxArgs = 0x100
 
-func (m *Monitor) Run() {
-	s := bufio.NewScanner(m.in)
-	s.Split(bufio.ScanLines)
+func (m *Monitor) Run() error {
+	usr, err := user.Current()
+	if err != nil {
+		return err
+	}
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:      m.Prompt,
+		HistoryFile: filepath.Join(usr.HomeDir, ".mach85.history"),
+		Stdin:       m.in,
+	})
+	if err != nil {
+		return err
+	}
 	for {
-		if m.interactive {
-			fmt.Printf("%v> ", m.Prompt)
+		line, err := rl.Readline()
+		if err != nil {
+			return err
 		}
-		if !s.Scan() {
-			return
-		}
-		m.parse(s.Text())
+		m.parse(line)
 	}
 }
 
