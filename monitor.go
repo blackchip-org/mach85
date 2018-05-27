@@ -23,6 +23,7 @@ const (
 	CmdHalt                = "h"
 	CmdLoad                = "l"
 	CmdLoadProgram         = "lp"
+	CmdLoadBasic           = "lb"
 	CmdMemory              = "m"
 	CmdMemoryShifted       = "M"
 	CmdNext                = "n"
@@ -119,8 +120,10 @@ func (m *Monitor) parse(line string) {
 		err = m.disassemble(args)
 	case CmdLoad:
 		err = m.load(args)
+	case CmdLoadBasic:
+		err = m.loadProgram(args, true)
 	case CmdLoadProgram:
-		err = m.loadProgram(args)
+		err = m.loadProgram(args, false)
 	case CmdGo:
 		err = m.goCmd(args)
 	case CmdHalt:
@@ -243,7 +246,7 @@ func (m *Monitor) load(args []string) error {
 	return nil
 }
 
-func (m *Monitor) loadProgram(args []string) error {
+func (m *Monitor) loadProgram(args []string, basic bool) error {
 	if err := checkLen(args, 1, 1); err != nil {
 		return err
 	}
@@ -254,8 +257,13 @@ func (m *Monitor) loadProgram(args []string) error {
 	}
 	addr := uint16(data[0]) + uint16(data[1])<<8
 	end := addr + uint16(len(data)) - 2
-	m.out.Printf("$%04x - $%04x\n", addr, end)
+	//m.out.Printf("$%04x - $%04x\n", addr, end)
 	m.mem.Import(addr, data[2:])
+	if basic {
+		vstart := end + 1
+		m.mem.Store16(AddrBasicVariableStorage, vstart)
+		m.mem.Store16(AddrBasicArrayStorage, vstart)
+	}
 	return nil
 }
 
