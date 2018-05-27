@@ -27,11 +27,30 @@ const (
 	Trap
 )
 
+func (s Status) String() string {
+	switch s {
+	case Init:
+		return "halt"
+	case Halt:
+		return "halt"
+	case Run:
+		return "run"
+	case Break:
+		return "break"
+	case Breakpoint:
+		return "breakpoint"
+	case Trap:
+		return "trap"
+	}
+	return "???"
+}
+
 type Mach85 struct {
 	Trace       func(op Operation)
 	Breakpoints map[uint16]bool
 	Memory      *Memory
 	Status      Status
+	Err         error
 	StopOnBreak bool
 	QuitOnStop  bool
 	cpu         *CPU
@@ -85,6 +104,7 @@ func (m *Mach85) Run() {
 		if m.Status != Run {
 			<-m.start
 			m.cpu.B = false
+			m.Err = nil
 		}
 		m.Status = Run
 		if _, ok := m.Breakpoints[m.cpu.PC+1]; ok {
@@ -126,9 +146,19 @@ func (m *Mach85) cycle() {
 		m.dasm.PC = m.cpu.PC
 		m.Trace(m.dasm.Next())
 	}
-	m.cpu.Next()
+	err := m.cpu.Next()
+	if err != nil {
+		m.Err = err
+		m.Status = Trap
+		return
+	}
 	for _, d := range m.devices {
-		d.Service()
+		err := d.Service()
+		if err != nil {
+			m.Err = err
+			m.Status = Trap
+			return
+		}
 	}
 }
 

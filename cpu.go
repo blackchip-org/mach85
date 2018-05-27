@@ -2,7 +2,6 @@ package mach85
 
 import (
 	"fmt"
-	"log"
 )
 
 // CPU is the MOS Technology 6502 series processor.
@@ -124,14 +123,15 @@ func (c *CPU) brk() {
 	c.push16(c.PC + 1)
 	c.push(c.SR())
 	c.I = true
+	c.B = false
 	c.PC = c.mem.Load16(AddrIrqVector) - 1
 }
 
-func (c *CPU) Next() {
+func (c *CPU) Next() error {
 	opcode := c.fetch()
 	execute, ok := executors[opcode]
 	if !ok {
-		log.Printf("$%04x: illegal opcode: $%02x", c.PC, opcode)
+		return fmt.Errorf("illegal opcode: $%02x", opcode)
 	} else {
 		execute(c)
 	}
@@ -154,6 +154,7 @@ func (c *CPU) Next() {
 		c.PC = c.mem.Load16(AddrResetVector) - 1
 	default:
 	}
+	return nil
 }
 
 func (c *CPU) IRQ() {

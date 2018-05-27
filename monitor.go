@@ -338,6 +338,12 @@ func (m *Monitor) registers(args []string) error {
 	if err := checkLen(args, 0, 0); err != nil {
 		return err
 	}
+	reason := ""
+	if m.mach.Err != nil {
+		reason = fmt.Sprintf(": %v", m.mach.Err)
+	}
+	m.out.Printf("[%v%v]\n", m.mach.Status, reason)
+
 	m.out.Println(m.cpu.String())
 	return nil
 }
