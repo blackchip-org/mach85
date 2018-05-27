@@ -17,15 +17,19 @@ func newTestCPU() *CPU {
 	return c
 }
 
-func testRunCPU(cpu *CPU) {
+func testRunCPU(cpu *CPU) error {
 	cycles := 0
 	for !cpu.B {
 		cycles++
 		if cycles > 100 {
 			fmt.Println("max cycles exceeded")
 		}
-		cpu.Next()
+		err := cpu.Next()
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func TestIllegalOpcode(t *testing.T) {
@@ -36,9 +40,9 @@ func TestIllegalOpcode(t *testing.T) {
 	c := newTestCPU()
 	// http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
 	c.mem.Store(0x0200, 0x02) // *KIL
-	testRunCPU(c)
-	if !strings.Contains(buf.String(), "illegal") {
-		t.Errorf("illegal instruction not logged")
+	err := testRunCPU(c)
+	if err == nil || !strings.HasPrefix(err.Error(), "illegal opcode") {
+		t.Errorf("illegal instruction not trapped")
 	}
 }
 
