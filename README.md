@@ -78,18 +78,11 @@ Don't use this [undocumented documentation](https://godoc.org/github.com/blackch
 
 ## Progress
 
-This works:
+The classic game of Monopole written in BASIC works:
 
-```basic[]
-10 PRINT "HELLO WORLD"
-20 GOTO 10
+![monopole](doc/monopole.png)
 
-RUN
-```
-
-Probably not much more than that works.
-
-![HELLO WORLD](doc/hello_world.png)
+No graphics, no sound, no timings.
 
 More to come? We shall see.
 
