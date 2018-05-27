@@ -29,6 +29,7 @@ const (
 	CmdScreenMemory        = "sm"
 	CmdScreenMemoryShifted = "SM"
 	CmdPokePeek            = "p"
+	CmdPokePeekWord        = "pw"
 	CmdStep                = "s"
 	CmdQuit                = "q"
 	CmdQuitLong            = "quit"
@@ -138,6 +139,8 @@ func (m *Monitor) parse(line string) {
 		err = m.step(args)
 	case CmdPokePeek:
 		err = m.pokePeek(args)
+	case CmdPokePeekWord:
+		err = m.pokePeekWord(args)
 	case CmdQuit, CmdQuitLong:
 		os.Exit(0)
 	case CmdRegisters:
@@ -324,6 +327,35 @@ func (m *Monitor) pokePeek(args []string) error {
 	return nil
 }
 
+func (m *Monitor) pokePeekWord(args []string) error {
+	if err := checkLen(args, 1, maxArgs); err != nil {
+		return err
+	}
+	address, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+	// peek
+	if len(args) == 1 {
+		v := m.mem.Load16(address)
+		m.out.Printf("$%04x +%d\n", v, v)
+		return nil
+	}
+	// poke
+	values := []uint16{}
+	for _, str := range args[1:] {
+		v, err := parseValue16(str)
+		if err != nil {
+			return err
+		}
+		values = append(values, v)
+	}
+	for offset, v := range values {
+		m.mem.Store16(address+uint16(offset), v)
+	}
+	return nil
+}
+
 func (m *Monitor) step(args []string) error {
 	if err := checkLen(args, 0, 0); err != nil {
 		return err
@@ -452,4 +484,12 @@ func parseValue(str string) (uint8, error) {
 		return 0, fmt.Errorf("invalid value: %v", str)
 	}
 	return uint8(value), nil
+}
+
+func parseValue16(str string) (uint16, error) {
+	value, err := parseUint(str, 16)
+	if err != nil {
+		return 0, fmt.Errorf("invalid value: %v", str)
+	}
+	return uint16(value), nil
 }

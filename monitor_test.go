@@ -396,6 +396,17 @@ func TestPoke(t *testing.T) {
 	}
 }
 
+func TestPokeWord(t *testing.T) {
+	mon, _ := newTestMonitor()
+	mon.in = testMonitorInput("pw 0900 abcd")
+	testMonitorRun(mon)
+	want := uint16(0xabcd)
+	have := mon.mem.Load16(0x0900)
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
 func TestPokeOldHexSigil(t *testing.T) {
 	mon, _ := newTestMonitor()
 	mon.in = testMonitorInput("p 0900 $ab")
@@ -483,6 +494,19 @@ func TestPeek(t *testing.T) {
 	testMonitorRun(mon)
 	lines := strings.Split(out.String(), "\n")
 	want := "$ab +171"
+	have := lines[0]
+	if want != have {
+		t.Errorf("\n want: %v \n have: %v \n", want, have)
+	}
+}
+
+func TestPeekWord(t *testing.T) {
+	mon, out := newTestMonitor()
+	mon.mem.Store16(0x0900, 0xabcd)
+	mon.in = testMonitorInput("pw 0900")
+	testMonitorRun(mon)
+	lines := strings.Split(out.String(), "\n")
+	want := "$abcd +43981"
 	have := lines[0]
 	if want != have {
 		t.Errorf("\n want: %v \n have: %v \n", want, have)
