@@ -139,6 +139,15 @@ func (c *CPU) Next() error {
 		c.inISR = false
 	}
 	select {
+	case <-c.reset:
+		c.A = 0
+		c.X = 0
+		c.Y = 0
+		c.SP = 0
+		c.SetSR(0)
+		c.inISR = false
+		// Vector is actual start address so set the PC one byte behind
+		c.PC = c.mem.Load16(AddrResetVector) - 1
 	case <-c.irq:
 		if !c.I {
 			// http://www.6502.org/tutorials/6502opcodes.html#RTI
@@ -149,9 +158,6 @@ func (c *CPU) Next() error {
 			c.PC = c.mem.Load16(AddrIrqVector) - 1
 			c.inISR = true
 		}
-	case <-c.reset:
-		// Vector is actual start address so set the PC one byte behind
-		c.PC = c.mem.Load16(AddrResetVector) - 1
 	default:
 	}
 	return nil

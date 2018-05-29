@@ -59,6 +59,7 @@ type Mach85 struct {
 	dasm        *Disassembler
 	start       chan bool
 	stop        chan bool
+	reset       chan bool
 }
 
 func New() *Mach85 {
@@ -72,6 +73,7 @@ func New() *Mach85 {
 		devices:     []Device{},
 		start:       make(chan bool, 10),
 		stop:        make(chan bool, 10),
+		reset:       make(chan bool, 10),
 	}
 	return m
 }
@@ -122,6 +124,10 @@ func (m *Mach85) Run() {
 		case <-m.stop:
 			m.Status = Halt
 			continue
+		case <-m.reset:
+			m.cpu.Reset()
+			mem64 := m.Memory.Base.(*Memory64)
+			mem64.Reset()
 		default:
 			m.cycle()
 		}
@@ -171,7 +177,7 @@ func (m *Mach85) Stop() {
 }
 
 func (m *Mach85) Reset() {
-	m.cpu.Reset()
+	m.reset <- true
 }
 
 func (m *Mach85) AddDevice(d Device) {

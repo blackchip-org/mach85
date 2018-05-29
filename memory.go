@@ -41,7 +41,7 @@ func (m *Memory) Load16(address uint16) uint16 {
 func (m *Memory) Load16Z(address uint8) uint16 {
 	lo := m.Load(uint16(address))
 	hi := m.Load(uint16(address + 1))
-	return uint16(hi<<8 + lo)
+	return uint16(hi<<8) + uint16(lo)
 }
 
 func (m *Memory) Store16(address uint16, value uint16) {

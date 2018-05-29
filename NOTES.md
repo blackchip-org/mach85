@@ -9,3 +9,7 @@ g 400
 ```
 
 - https://www.yoyogames.com/blog/85
+
+- http://mocagh.org/cbm/c1541II-manual.pdf
+- https://www.atarimagazines.com/compute/issue38/073_1_HOW_THE_VIC_64_SERIAL_BUS_WORKS.php
+-

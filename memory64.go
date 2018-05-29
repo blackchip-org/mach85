@@ -105,6 +105,18 @@ type Memory64 struct {
 func NewMemory64() *Memory64 {
 	m := &Memory64{}
 
+	m.Chunks[BasicROM] = NullMemory{}
+	m.Chunks[KernalROM] = NullMemory{}
+	m.Chunks[CharROM] = NullMemory{}
+	m.Chunks[CartLoROM] = NullMemory{}
+	m.Chunks[CartHiROM] = NullMemory{}
+	m.Chunks[Open] = NullMemory{}
+	m.Reset()
+
+	return m
+}
+
+func (m *Memory64) Reset() {
 	m.Chunks[RAM0] = NewRAM(0x1000) // $0000 - $0fff
 	m.Chunks[RAM1] = NewRAM(0x7000) // $1000 - $7fff
 	m.Chunks[RAM2] = NewRAM(0x2000) // $8000 - $9fff
@@ -113,17 +125,8 @@ func NewMemory64() *Memory64 {
 	m.Chunks[RAM5] = NewRAM(0x1000) // $d000 - $dfff
 	m.Chunks[RAM6] = NewRAM(0x2000) // $e000 - $ffff
 
-	m.Chunks[BasicROM] = NullMemory{}
-	m.Chunks[KernalROM] = NullMemory{}
-	m.Chunks[CharROM] = NullMemory{}
-	m.Chunks[CartLoROM] = NullMemory{}
-	m.Chunks[CartHiROM] = NullMemory{}
-	m.Chunks[Open] = NullMemory{}
-
 	m.Chunks[IO] = NewRAM(0x1000) // $d000 - $dfff
-
 	m.SetMode(31)
-	return m
 }
 
 func (m *Memory64) Mode() uint8 {
