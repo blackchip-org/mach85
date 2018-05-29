@@ -53,6 +53,7 @@ type Mach85 struct {
 	Err         error
 	StopOnBreak bool
 	QuitOnStop  bool
+	OnStop      func()
 	cpu         *CPU
 	devices     []Device
 	inputs      []SDLInput
@@ -70,6 +71,7 @@ func New() *Mach85 {
 		cpu:         cpu,
 		dasm:        NewDisassembler(mem),
 		Breakpoints: map[uint16]bool{},
+		OnStop:      func() {},
 		devices:     []Device{},
 		start:       make(chan bool, 10),
 		stop:        make(chan bool, 10),
@@ -104,6 +106,9 @@ func (m *Mach85) Run() {
 			return
 		}
 		if m.Status != Run {
+			if m.Status != Init {
+				m.OnStop()
+			}
 			<-m.start
 			m.cpu.B = false
 			m.Err = nil

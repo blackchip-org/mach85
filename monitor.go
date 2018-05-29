@@ -52,6 +52,7 @@ type Monitor struct {
 	mem          *Memory
 	in           io.ReadCloser
 	out          *log.Logger
+	rl           *readline.Instance
 	lastCmd      string
 	memPtr       uint16
 	dasmPtr      uint16
@@ -66,6 +67,11 @@ func NewMonitor(mach *Mach85) *Monitor {
 		in:           ioutil.NopCloser(os.Stdin),
 		out:          log.New(os.Stdout, "", 0),
 		Disassembler: NewDisassembler(mach.Memory),
+	}
+	mach.OnStop = func() {
+		mon.out.Println()
+		mon.registers([]string{})
+		mon.rl.Refresh()
 	}
 	return mon
 }
@@ -85,6 +91,7 @@ func (m *Monitor) Run() error {
 	if err != nil {
 		return err
 	}
+	m.rl = rl
 	for {
 		line, err := rl.Readline()
 		if err != nil {
